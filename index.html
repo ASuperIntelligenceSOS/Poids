@@ -1,1 +1,937 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Weight Timeline – Nicolas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
 
+  <style>
+    :root {
+      --bg-dark: #020617;
+      --bg-deep: #020018;
+      --accent-1: #38bdf8;
+      --accent-2: #a855f7;
+      --accent-3: #22c55e;
+      --text-main: #e5e7eb;
+      --text-soft: #9ca3af;
+      --card-bg: rgba(15, 23, 42, 0.78);
+      --border-soft: rgba(148, 163, 184, 0.3);
+      --shadow-soft: 0 24px 80px rgba(15, 23, 42, 0.85);
+      --radius-lg: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Space Grotesk", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--text-main);
+      background: radial-gradient(circle at 0% 0%, #0f172a 0, transparent 55%),
+                  radial-gradient(circle at 100% 100%, #1e293b 0, transparent 55%),
+                  linear-gradient(135deg, var(--bg-deep), var(--bg-dark));
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    .grid-overlay {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(to right, rgba(148, 163, 184, 0.09) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(148, 163, 184, 0.09) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mix-blend-mode: soft-light;
+      opacity: 0.55;
+      animation: gridMove 40s linear infinite;
+      z-index: 0;
+    }
+
+    @keyframes gridMove {
+      from { transform: translate3d(0, 0, 0); }
+      to   { transform: translate3d(-60px, -60px, 0); }
+    }
+
+    .aurora {
+      position: fixed;
+      inset: -40%;
+      background: radial-gradient(circle at 10% 20%, rgba(56, 189, 248, 0.17), transparent 60%),
+                  radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.2), transparent 60%),
+                  radial-gradient(circle at 20% 90%, rgba(34, 197, 94, 0.16), transparent 65%);
+      opacity: 0.9;
+      mix-blend-mode: screen;
+      animation:
+        auroraDrift 55s ease-in-out infinite alternate,
+        auroraHue 60s linear infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    @keyframes auroraDrift {
+      0%   { transform: translate3d(0, 0, 0) scale(1); }
+      50%  { transform: translate3d(-40px, 30px, 0) scale(1.05); }
+      100% { transform: translate3d(40px, -40px, 0) scale(1.08); }
+    }
+
+    @keyframes auroraHue {
+      0%   { filter: blur(10px) hue-rotate(0deg); }
+      50%  { filter: blur(11px) hue-rotate(24deg); }
+      100% { filter: blur(10px) hue-rotate(-24deg); }
+    }
+
+    .shell {
+      position: relative;
+      z-index: 1;
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+    }
+
+    @media (min-width: 768px) {
+      .shell { padding: 32px 24px 56px; }
+    }
+
+    .header {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    @media (min-width: 640px) {
+      .header {
+        flex-direction: row;
+        align-items: baseline;
+        justify-content: space-between;
+      }
+    }
+
+    .title-block { display: flex; flex-direction: column; gap: 4px; }
+
+    .title {
+      font-size: 24px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .title-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      background: radial-gradient(circle at 0 0, rgba(56, 189, 248, 0.5), transparent 60%),
+                  radial-gradient(circle at 100% 100%, rgba(168, 85, 247, 0.35), transparent 60%),
+                  rgba(15, 23, 42, 0.86);
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.35);
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--text-soft);
+      max-width: 620px;
+    }
+    .subtitle strong { display:block; color:#e5e7eb; margin-bottom:2px; }
+
+    .chip-row { display:flex; flex-wrap:wrap; gap:8px; margin-top:4px; }
+    .chip {
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(15, 23, 42, 0.5));
+      backdrop-filter: blur(10px);
+    }
+
+    .panel {
+      border-radius: var(--radius-lg);
+      background: linear-gradient(145deg, rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.72));
+      border: 1px solid var(--border-soft);
+      box-shadow: var(--shadow-soft);
+      padding: 16px 14px 18px;
+      margin-bottom: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    @media (min-width: 640px) {
+      .panel { padding: 20px 18px 22px; }
+    }
+
+    .panel-header {
+      display:flex;
+      justify-content:space-between;
+      align-items:baseline;
+      margin-bottom:10px;
+      gap:10px;
+    }
+
+    .panel-title {
+      font-size:14px;
+      letter-spacing:0.18em;
+      text-transform:uppercase;
+      color:#cbd5f5;
+    }
+
+    .panel-meta {
+      font-size:11px;
+      color:var(--text-soft);
+      text-align:right;
+    }
+
+    /* Aperçu global */
+    .overview-container { margin-bottom:10px; }
+    .overview-label {
+      text-align:center;
+      font-size:12px;
+      color:#22c55e;
+      letter-spacing:0.04em;
+      margin-bottom:4px;
+    }
+    .overview-inner {
+      width:80%;
+      max-width:620px;
+      margin:0 auto;
+      height:150px;
+    }
+    @media(min-width:640px){ .overview-inner{height:170px;} }
+
+    /* Courbe principale */
+    .chart-scroll {
+      width:100%;
+      overflow-x:auto;
+      padding-bottom:6px;
+      -webkit-overflow-scrolling:touch;
+    }
+    .chart-scroll-inner { min-width:720px; }
+    #chart-container {
+      position:relative;
+      width:100%;
+      height:280px;
+    }
+    @media(min-width:640px){
+      .chart-scroll-inner{min-width:900px;}
+      #chart-container{height:340px;}
+    }
+
+    canvas { width:100%!important; height:100%!important; }
+
+    .add-form-wrapper {
+      margin:10px 0 12px;
+      padding:10px 10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(148,163,184,0.45);
+      background:
+        radial-gradient(circle at 0 0, rgba(56,189,248,0.14), transparent 60%),
+        radial-gradient(circle at 100% 100%, rgba(168,85,247,0.16), transparent 60%),
+        rgba(15,23,42,0.86);
+      backdrop-filter:blur(14px);
+    }
+
+    .add-form { display:flex; flex-direction:column; gap:8px; }
+    .add-form-row { display:flex; flex-wrap:wrap; gap:8px; }
+
+    .field {
+      flex:1 1 90px;
+      min-width:90px;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    .field label {
+      font-size:10px;
+      color:var(--text-soft);
+      letter-spacing:0.12em;
+      text-transform:uppercase;
+    }
+    .field input {
+      background:#020617;
+      color:#e5e7eb;
+      border-radius:8px;
+      border:1px solid rgba(148,163,184,0.6);
+      padding:6px 8px;
+      font-size:13px;
+      outline:none;
+    }
+    .field input:focus {
+      border-color:#38bdf8;
+      box-shadow:0 0 0 1px rgba(56,189,248,0.45);
+    }
+
+    .add-btn {
+      margin-top:4px;
+      border:none;
+      border-radius:999px;
+      padding:8px 10px;
+      font-size:11px;
+      font-weight:600;
+      text-transform:uppercase;
+      letter-spacing:0.14em;
+      cursor:pointer;
+      color:#020617;
+      background:linear-gradient(90deg,var(--accent-1),var(--accent-2),var(--accent-3));
+      background-size:180% 180%;
+      animation:btnGradient 12s ease infinite;
+      box-shadow:0 12px 40px rgba(56,189,248,0.45);
+    }
+    .add-btn:hover {
+      transform:translateY(-1px);
+      box-shadow:0 18px 50px rgba(56,189,248,0.65);
+    }
+    .add-btn:active {
+      transform:translateY(0);
+      box-shadow:0 8px 24px rgba(56,189,248,0.5);
+    }
+    @keyframes btnGradient {
+      0%{background-position:0% 50%;}
+      50%{background-position:100% 50%;}
+      100%{background-position:0% 50%;}
+    }
+
+    table {
+      width:100%;
+      border-collapse:collapse;
+      font-size:12px;
+      margin-top:8px;
+    }
+    th,td {
+      padding:6px 6px;
+      border-bottom:1px solid rgba(31,41,55,0.9);
+    }
+    th {
+      text-align:left;
+      font-weight:500;
+      text-transform:uppercase;
+      letter-spacing:0.1em;
+      font-size:11px;
+      color:var(--text-soft);
+    }
+    tr:nth-child(even) td { background:rgba(15,23,42,0.7); }
+    tr:hover td { background:rgba(15,23,42,0.95); }
+
+    tr.data-row { cursor:pointer; }
+
+    .weight-cell {
+      text-align:right;
+      font-variant-numeric:tabular-nums;
+    }
+
+    .footer-note {
+      margin-top:10px;
+      font-size:11px;
+      color:var(--text-soft);
+      display:flex;
+      justify-content:space-between;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .footer-extra {
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      max-width:360px;
+    }
+
+    .legend-dot {
+      width:9px;
+      height:9px;
+      border-radius:999px;
+      display:inline-block;
+      margin-right:6px;
+      background:radial-gradient(circle at 30% 30%, #ffffff, var(--accent-1));
+      box-shadow:0 0 8px rgba(56,189,248,0.8);
+    }
+    .legend {
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-size:11px;
+      color:var(--text-soft);
+    }
+
+    /* Intro futuriste ultra courte */
+    .intro-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        radial-gradient(circle at 10% 0%, rgba(56, 189, 248, 0.35), transparent 60%),
+        radial-gradient(circle at 90% 100%, rgba(168, 85, 247, 0.45), transparent 65%),
+        rgba(2, 6, 23, 0.96);
+      backdrop-filter: blur(14px);
+      opacity: 1;
+      transform: scale(1);
+      transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+    }
+
+    .intro-core {
+      max-width: 360px;
+      text-align: center;
+    }
+
+    .intro-title {
+      font-size: 20px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .intro-subtitle {
+      font-size: 12px;
+      color: var(--text-soft);
+      margin-bottom: 14px;
+    }
+
+    .intro-bar {
+      position: relative;
+      width: 100%;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .intro-bar-fill {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, var(--accent-1), var(--accent-2), var(--accent-3));
+      background-size: 200% 200%;
+      transform-origin: left center;
+      transform: scaleX(0.12);
+      animation: introScan 2.2s ease-out forwards;
+    }
+
+    .intro-meta {
+      font-size: 11px;
+      color: var(--text-soft);
+      opacity: 0.85;
+    }
+
+    body.intro-done .intro-overlay {
+      opacity: 0;
+      transform: scale(1.02);
+      pointer-events: none;
+    }
+
+    @keyframes introScan {
+      0% {
+        transform: scaleX(0.1);
+        background-position: 0% 50%;
+      }
+      60% {
+        transform: scaleX(0.85);
+        background-position: 100% 50%;
+      }
+      100% {
+        transform: scaleX(1);
+        background-position: 50% 50%;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .intro-bar-fill {
+        animation-duration: 0.25s;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Intro overlay -->
+  <div class="intro-overlay" aria-hidden="true">
+    <div class="intro-core">
+      <div class="intro-title">Weight Timeline</div>
+      <div class="intro-subtitle">Initialisation du journal de poids</div>
+      <div class="intro-bar">
+        <div class="intro-bar-fill"></div>
+      </div>
+      <div class="intro-meta">Synchronisation des données locales…</div>
+    </div>
+  </div>
+
+  <div class="grid-overlay"></div>
+  <div class="aurora"></div>
+
+  <div class="shell">
+    <header class="header">
+      <div class="title-block">
+        <div class="title">
+          <span>Weight Timeline</span>
+          <span class="title-badge">Nicolas • Quantum log</span>
+        </div>
+        <p class="subtitle">
+          <strong>Visualisation de l’évolution du poids de Nicolas.</strong>
+        </p>
+        <div class="chip-row">
+          <span class="chip">Tracking ultra fin</span>
+          <span class="chip">Axes: temps / kg</span>
+          <span class="chip">Affichage au 0,1 kg près</span>
+        </div>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Courbe de poids</div>
+        <div class="panel-meta">
+          <div id="rangeLabel"></div>
+          <div id="lastValue"></div>
+        </div>
+      </div>
+
+      <!-- Aperçu d’ensemble -->
+      <div class="overview-container">
+        <div class="overview-label">Aperçu d’ensemble</div>
+        <div class="overview-inner">
+          <canvas id="overviewChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Courbe principale -->
+      <div class="chart-scroll">
+        <div class="chart-scroll-inner">
+          <div id="chart-container">
+            <canvas id="weightChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="add-form-wrapper">
+        <form id="addForm" class="add-form">
+          <div class="add-form-row">
+            <div class="field">
+              <label for="dateInput">Date</label>
+              <input type="date" id="dateInput" required />
+            </div>
+            <div class="field">
+              <label for="timeInput">Heure</label>
+              <input type="time" id="timeInput" />
+            </div>
+            <div class="field">
+              <label for="weightInput">Poids (kg)</label>
+              <input
+                type="number"
+                id="weightInput"
+                step="0.1"
+                inputmode="decimal"
+                placeholder="52,8"
+                required
+              />
+            </div>
+          </div>
+          <button type="submit" class="add-btn">+ Ajouter la mesure</button>
+        </form>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Date et heure</th>
+            <th class="weight-cell">Poids (kg)</th>
+          </tr>
+        </thead>
+        <tbody id="weightTableBody"></tbody>
+      </table>
+
+      <div class="footer-note">
+        <div class="legend">
+          <span class="legend-dot"></span>
+          <span>Chaque point représente une mesure exacte enregistrée.</span>
+        </div>
+        <div class="footer-extra">
+          <div>Vue globale en haut, courbe principale défilante si nécessaire.</div>
+          <div>Pour rentrer une valeur, entrer le mot de passe (3 premières lettres + date de naissance).</div>
+          <div>Pour supprimer une valeur, cliquez ou touchez la ligne correspondante, confirmez puis entrez le mot de passe.</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // nouveau storageKey pour repartir proprement des 14 valeurs Santé
+    const storageKey = "np_weight_data_v2";
+
+    // Série par défaut EXACTEMENT comme Santé (14 valeurs de 63,2 à 52,8)
+    const defaultData = [
+      { iso: "2024-03-22T16:36:00", weight: 63.2 },
+      { iso: "2024-04-05T16:31:00", weight: 61.7 },
+      { iso: "2024-04-17T14:01:00", weight: 60.1 },
+      { iso: "2024-09-09T14:41:00", weight: 57.5 },
+      { iso: "2024-09-28T16:26:00", weight: 56.1 },
+      { iso: "2024-10-12T16:00:00", weight: 54.6 },
+      { iso: "2024-10-24T14:45:00", weight: 54.5 },
+      { iso: "2024-10-28T14:51:00", weight: 54.4 },
+      { iso: "2024-11-01T14:13:00", weight: 54.1 },
+      { iso: "2024-11-03T15:02:00", weight: 53.8 },
+      { iso: "2024-11-08T16:41:00", weight: 53.7 },
+      { iso: "2024-11-10T16:40:00", weight: 53.2 },
+      { iso: "2024-11-14T16:08:00", weight: 53.1 },
+      { iso: "2024-11-15T15:49:00", weight: 52.8 }
+    ];
+
+    let tbodyElem, rangeLabelElem, lastValueElem;
+    let chartCtx, overviewCtx;
+    let weightChart, overviewChart;
+
+    function seedIfEmpty() {
+      let stored;
+      try {
+        stored = JSON.parse(localStorage.getItem(storageKey) || "[]");
+      } catch {
+        stored = [];
+      }
+      if (!Array.isArray(stored) || stored.length === 0) {
+        const seeded = defaultData.map((p, index) => ({
+          iso: p.iso,
+          weight: p.weight,
+          id: "seed-" + index
+        }));
+        localStorage.setItem(storageKey, JSON.stringify(seeded));
+      }
+    }
+
+    function getStoredData() {
+      let stored;
+      try {
+        stored = JSON.parse(localStorage.getItem(storageKey) || "[]");
+      } catch {
+        stored = [];
+      }
+      if (!Array.isArray(stored)) stored = [];
+      return stored;
+    }
+
+    function saveStoredData(data) {
+      localStorage.setItem(storageKey, JSON.stringify(data));
+    }
+
+    function getAllData() {
+      const all = getStoredData().slice();
+      all.sort((a, b) => new Date(a.iso) - new Date(b.iso));
+      return all;
+    }
+
+    function formatLabelFromIso(iso) {
+      const d = new Date(iso);
+      if (isNaN(d)) return iso;
+      const dateStr = d.toLocaleDateString("fr-FR", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+      }).replace(".", "");
+      const timeStr = d.toLocaleTimeString("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+      return dateStr + " – " + timeStr;
+    }
+
+    function checkPassword(actionLabel) {
+      const input = window.prompt("Mot de passe requis pour " + actionLabel + " :");
+      if (input === null) return false; // Annuler = on arrête tout
+      const norm = input.trim().toLowerCase();
+      if (norm === "pac23121983" || norm === "pac231283") {
+        return true;
+      }
+      alert("Mot de passe incorrect.");
+      return false;
+    }
+
+    // Plugin labels au-dessus des points (avec gestion spéciale du dernier)
+    const valueLabelPlugin = {
+      id: "valueLabelPlugin",
+      afterDatasetsDraw(chart) {
+        const ctx = chart.ctx;
+        ctx.save();
+        const dataset = chart.data.datasets[0];
+        const meta = chart.getDatasetMeta(0);
+        const total = dataset.data.length;
+
+        let step = 1;
+        if (total > 10) step = 2;
+        if (total > 18) step = 3;
+
+        meta.data.forEach((point, index) => {
+          const value = dataset.data[index];
+          if (value == null) return;
+
+          if (index === total - 1) {
+            // dernier point : toujours affiché
+          } else {
+            if (index % step !== 0) return;
+            if (index >= total - 2) return;
+          }
+
+          let textX = point.x;
+          let textAlign = "center";
+
+          if (index === total - 1) {
+            textAlign = "right";
+            textX = point.x - 6;
+          }
+
+          ctx.fillStyle = "#e5e7eb";
+          ctx.font = "11px Space Grotesk, system-ui, sans-serif";
+          ctx.textAlign = textAlign;
+          ctx.textBaseline = "bottom";
+          const text = Number(value).toFixed(1).replace(".", ",");
+          ctx.fillText(text, textX, point.y - 6);
+        });
+
+        ctx.restore();
+      }
+    };
+
+    function deleteEntry(id, label) {
+      if (!window.confirm("Supprimer la mesure \"" + label + "\" ?")) return;
+      if (!checkPassword("supprimer cette mesure")) return;
+      const filtered = getStoredData().filter(p => p.id !== id);
+      saveStoredData(filtered);
+      refreshUI();
+    }
+
+    function refreshUI() {
+      const all = getAllData();
+
+      tbodyElem.innerHTML = "";
+      all.forEach(p => {
+        const tr = document.createElement("tr");
+        tr.className = "data-row";
+        const tdDate = document.createElement("td");
+        const tdWeight = document.createElement("td");
+        tdDate.textContent = formatLabelFromIso(p.iso);
+        tdWeight.textContent = Number(p.weight).toFixed(1).replace(".", ",");
+        tdWeight.className = "weight-cell";
+        tr.appendChild(tdDate);
+        tr.appendChild(tdWeight);
+
+        const labelForConfirm = tdDate.textContent + " – " + tdWeight.textContent + " kg";
+
+        tr.addEventListener("click", () => {
+          deleteEntry(p.id, labelForConfirm);
+        });
+
+        tbodyElem.appendChild(tr);
+      });
+
+      if (all.length > 0) {
+        rangeLabelElem.textContent =
+          formatLabelFromIso(all[0].iso).split("–")[0].trim() +
+          " → " +
+          formatLabelFromIso(all[all.length - 1].iso).split("–")[0].trim();
+        const last = all[all.length - 1];
+        lastValueElem.textContent =
+          "Dernier poids: " +
+          Number(last.weight).toFixed(1).replace(".", ",") +
+          " kg";
+      } else {
+        rangeLabelElem.textContent = "";
+        lastValueElem.textContent = "";
+      }
+
+      const labels = all.map(p => formatLabelFromIso(p.iso));
+      const weights = all.map(p => p.weight);
+      if (weights.length === 0) return;
+
+      const minW = Math.min(...weights);
+      const maxW = Math.max(...weights);
+      const padding = 1.0;
+      const suggestedMin = Math.floor((minW - padding) * 10) / 10;
+      const suggestedMax = Math.ceil((maxW + padding) * 10) / 10;
+
+      // Courbe principale
+      if (!weightChart) {
+        weightChart = new Chart(chartCtx, {
+          type: "line",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Poids (kg)",
+                data: weights,
+                tension: 0.3,
+                borderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                borderColor: "#38bdf8",
+                pointBackgroundColor: "#f97316",
+                pointBorderWidth: 0,
+                fill: true,
+                backgroundColor(ctx) {
+                  const chart = ctx.chart;
+                  const area = chart.chartArea;
+                  if (!area) return "rgba(56, 189, 248, 0.25)";
+                  const gradient = chart.ctx.createLinearGradient(
+                    0, area.top, 0, area.bottom
+                  );
+                  gradient.addColorStop(0, "rgba(56, 189, 248, 0.35)");
+                  gradient.addColorStop(1, "rgba(15, 23, 42, 0.1)");
+                  return gradient;
+                }
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: "index", intersect: false },
+            layout: { padding: { right: 40 } },
+            scales: {
+              x: {
+                ticks: {
+                  maxRotation: 45,
+                  minRotation: 25,
+                  color: "#9ca3af",
+                  autoSkip: true,
+                  maxTicksLimit: 8
+                },
+                grid: { color: "rgba(55, 65, 81, 0.5)" }
+              },
+              y: {
+                suggestedMin,
+                suggestedMax,
+                ticks: {
+                  color: "#9ca3af",
+                  callback(value) {
+                    return Number(value).toFixed(1) + " kg";
+                  }
+                },
+                grid: { color: "rgba(55, 65, 81, 0.65)" }
+              }
+            },
+            plugins: {
+              legend: {
+                labels: { color: "#e5e7eb", font: { size: 11 } }
+              },
+              tooltip: {
+                backgroundColor: "rgba(15, 23, 42, 0.94)",
+                borderColor: "rgba(148, 163, 184, 0.6)",
+                borderWidth: 1,
+                titleFont: { family: "Space Grotesk", size: 12 },
+                bodyFont: { family: "Space Grotesk", size: 11 },
+                callbacks: {
+                  label(context) {
+                    const v = context.parsed.y;
+                    return "Poids: " + Number(v).toFixed(1).replace(".", ",") + " kg";
+                  }
+                }
+              }
+            }
+          },
+          plugins: [valueLabelPlugin]
+        });
+      } else {
+        weightChart.options.scales.y.suggestedMin = suggestedMin;
+        weightChart.options.scales.y.suggestedMax = suggestedMax;
+        weightChart.data.labels = labels;
+        weightChart.data.datasets[0].data = weights;
+        weightChart.update();
+      }
+
+      // Aperçu d’ensemble
+      if (!overviewChart) {
+        overviewChart = new Chart(overviewCtx, {
+          type: "line",
+          data: {
+            labels,
+            datasets: [
+              {
+                data: weights,
+                tension: 0.08,
+                borderWidth: 2,
+                pointRadius: 0,
+                borderColor: "#22c55e",
+                fill: false
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: "none" },
+            scales: { x: { display:false }, y:{ display:false } },
+            plugins: { legend:{display:false}, tooltip:{enabled:false} }
+          }
+        });
+      } else {
+        overviewChart.data.labels = labels;
+        overviewChart.data.datasets[0].data = weights;
+        overviewChart.update();
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      seedIfEmpty();
+
+      tbodyElem = document.getElementById("weightTableBody");
+      rangeLabelElem = document.getElementById("rangeLabel");
+      lastValueElem = document.getElementById("lastValue");
+      chartCtx = document.getElementById("weightChart").getContext("2d");
+      overviewCtx = document.getElementById("overviewChart").getContext("2d");
+
+      const form = document.getElementById("addForm");
+      const dateInput = document.getElementById("dateInput");
+      const timeInput = document.getElementById("timeInput");
+      const weightInput = document.getElementById("weightInput");
+
+      const now = new Date();
+      dateInput.value = now.toISOString().slice(0, 10);
+      timeInput.value = now.toTimeString().slice(0, 5);
+
+      form.addEventListener("submit", e => {
+        e.preventDefault();
+        const date = dateInput.value;
+        const time = timeInput.value || "12:00";
+        const raw = (weightInput.value || "").replace(",", ".");
+        const weight = parseFloat(raw);
+
+        if (!date || isNaN(weight)) {
+          alert("Merci de remplir au minimum la date et le poids.");
+          return;
+        }
+
+        if (!checkPassword("ajouter cette mesure")) return;
+
+        const iso = date + "T" + time + ":00";
+        const stored = getStoredData();
+        stored.push({
+          iso,
+          weight,
+          id: Date.now().toString(36) + Math.random().toString(16).slice(2)
+        });
+        saveStoredData(stored);
+
+        weightInput.value = "";
+        refreshUI();
+      });
+
+      refreshUI();
+
+      // Disparition automatique de l'intro
+      const introDuration = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? 250
+        : 2200;
+
+      setTimeout(() => {
+        document.body.classList.add("intro-done");
+      }, introDuration);
+    });
+  </script>
+</body>
+</html>
