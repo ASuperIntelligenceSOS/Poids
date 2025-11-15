@@ -5,7 +5,7 @@
   <title>Weight Timeline – Nicolas</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Chart.js + adaptateur dates pour l'aperçu temps réel sur 12 mois -->
+  <!-- Chart.js + adaptateur dates pour l’aperçu -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
 
@@ -401,7 +401,7 @@
         </div>
       </div>
 
-      <!-- Aperçu d’ensemble sur 12 mois -->
+      <!-- Aperçu d’ensemble -->
       <div class="overview-container">
         <div class="overview-label">Aperçu d’ensemble</div>
         <div class="overview-inner">
@@ -409,7 +409,7 @@
         </div>
       </div>
 
-      <!-- Courbe principale détaillée -->
+      <!-- Courbe principale -->
       <div class="chart-scroll">
         <div class="chart-scroll-inner">
           <div id="chart-container">
@@ -461,7 +461,7 @@
           <span>Chaque point représente une mesure exacte enregistrée.</span>
         </div>
         <div class="footer-extra">
-          <div>Vue globale en haut sur 12 mois, courbe principale défilante si nécessaire.</div>
+          <div>Vue globale en haut à partir de mars 2025, courbe principale défilante si nécessaire.</div>
           <div>Pour rentrer une valeur, entrer le mot de passe (3 premières lettres + date de naissance).</div>
           <div>Pour supprimer une valeur, cliquez ou touchez la ligne correspondante, confirmez puis entrez le mot de passe.</div>
         </div>
@@ -472,7 +472,7 @@
   <script>
     const storageKey = "np_weight_data_v2";
 
-    // Mesures initiales (Apple Santé)
+    // Mesures initiales
     const defaultData = [
       { iso: "2024-03-22T16:36:00", weight: 63.2 },
       { iso: "2024-04-05T16:31:00", weight: 61.7 },
@@ -635,7 +635,7 @@
         tbodyElem.appendChild(tr);
       });
 
-      // META (dates / dernier poids)
+      // META
       if (all.length > 0) {
         rangeLabelElem.textContent =
           formatLabelFromIso(all[0].iso).split("–")[0].trim() +
@@ -750,13 +750,11 @@
         weightChart.update();
       }
 
-      // APERÇU D’ENSEMBLE SUR 12 MOIS (échelle fixe)
-      const msPerDay = 24 * 60 * 60 * 1000;
+      // APERÇU D’ENSEMBLE : de mars 2025 jusqu’à la fin du mois de la dernière mesure
       const lastDate = new Date(all[all.length - 1].iso);
-      const minTime = new Date(lastDate.getTime() - 365 * msPerDay);
-      const maxTime = lastDate;
+      const minTime = new Date(2025, 2, 1);  // 1er mars 2025 (mois 0 = janvier)
+      const maxTime = new Date(lastDate.getFullYear(), lastDate.getMonth() + 1, 1); // début du mois suivant -> donne toute la largeur du mois courant
 
-      // données sous forme {x: date, y: poids}
       const overviewData = all.map(p => ({
         x: new Date(p.iso),
         y: p.weight
@@ -789,17 +787,15 @@
                 max: maxTime,
                 time: {
                   unit: "month",
-                  displayFormats: { month: "LLL" } // M, J, A...
+                  displayFormats: { month: "LLL" }
                 },
                 ticks: {
                   color: "#64748b",
                   maxRotation: 0,
                   autoSkip: true,
-                  major: { enabled: false },
                   callback(value) {
                     const d = new Date(value);
-                    // lettre courte du mois (M, A, J...)
-                    return d.toLocaleDateString("fr-FR", { month: "narrow" });
+                    return d.toLocaleDateString("fr-FR", { month: "narrow" }); // M, A, M, J...
                   }
                 },
                 grid: {
