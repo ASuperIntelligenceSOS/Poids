@@ -61,7 +61,7 @@
       position: fixed;
       inset: -40%;
       background: radial-gradient(circle at 10% 20%, rgba(56, 189, 248, 0.17), transparent 60%),
-                  radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.2), transparent 60%),
+                  radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.20), transparent 60%),
                   radial-gradient(circle at 20% 90%, rgba(34, 197, 94, 0.16), transparent 65%);
       opacity: 0.9;
       mix-blend-mode: screen;
@@ -207,6 +207,16 @@
       height:150px;
     }
     @media(min-width:640px){ .overview-inner{height:170px;} }
+
+    .overview-metrics {
+      margin-top:4px;
+      text-align:center;
+      font-size:11px;
+      color:#22c55e;
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
 
     /* Courbe principale */
     .chart-scroll {
@@ -501,6 +511,10 @@
         <div class="overview-inner">
           <canvas id="overviewChart"></canvas>
         </div>
+        <div class="overview-metrics">
+          <span id="speedGlobal"></span>
+          <span id="speed7d"></span>
+        </div>
       </div>
 
       <!-- Courbe principale -->
@@ -586,6 +600,7 @@
     ];
 
     let tbodyElem, rangeLabelElem, lastValueElem;
+    let speedGlobalElem, speed7dElem;
     let chartCtx, overviewCtx;
     let weightChart, overviewChart;
 
@@ -706,6 +721,64 @@
       refreshUI();
     }
 
+    function computeSpeeds(all) {
+      if (!speedGlobalElem || !speed7dElem) return;
+
+      if (!all || all.length < 2) {
+        speedGlobalElem.textContent = "";
+        speed7dElem.textContent = "";
+        return;
+      }
+
+      const msPerDay = 24 * 60 * 60 * 1000;
+
+      // Vitesse moyenne globale (depuis la première mesure)
+      const first = all[0];
+      const last = all[all.length - 1];
+      const totalDays = (new Date(last.iso) - new Date(first.iso)) / msPerDay;
+
+      let globalKgPerDay = null;
+      if (totalDays > 0) {
+        const deltaKg = last.weight - first.weight; // négatif si perte
+        globalKgPerDay = deltaKg / totalDays;
+      }
+
+      // Vitesse moyenne sur les 7 derniers jours
+      const lastDate = new Date(last.iso);
+      const cutoff = new Date(lastDate.getTime() - 7 * msPerDay);
+      const windowPoints = all.filter(p => new Date(p.iso) >= cutoff);
+
+      let sevenKgPerDay = null;
+      if (windowPoints.length >= 2) {
+        const firstW = windowPoints[0];
+        const lastW = windowPoints[windowPoints.length - 1];
+        const windowDays = (new Date(lastW.iso) - new Date(firstW.iso)) / msPerDay;
+
+        if (windowDays > 0) {
+          const deltaWindowKg = lastW.weight - firstW.weight;
+          sevenKgPerDay = deltaWindowKg / windowDays;
+        }
+      }
+
+      const formatSpeed = (kgPerDay) => {
+        if (kgPerDay === null) return "Données insuffisantes.";
+        const gPerDay = kgPerDay * 1000;
+        const absG = Math.abs(gPerDay);
+        const rounded = Math.round(absG);
+
+        if (rounded < 1) return "≈ 0 g/j (stable)";
+
+        const direction = kgPerDay < 0 ? "perte" : "prise";
+        return "≈ " + rounded.toLocaleString("fr-FR") + " g/j de " + direction;
+      };
+
+      speedGlobalElem.textContent =
+        "Vitesse moyenne globale : " + formatSpeed(globalKgPerDay);
+
+      speed7dElem.textContent =
+        "Sur les 7 derniers jours : " + formatSpeed(sevenKgPerDay);
+    }
+
     function refreshUI() {
       const all = getAllData();
 
@@ -744,6 +817,8 @@
         rangeLabelElem.textContent = "";
         lastValueElem.textContent = "";
       }
+
+      computeSpeeds(all);
 
       const labels = all.map(p => formatLabelFromIso(p.iso));
       const weights = all.map(p => p.weight);
@@ -844,7 +919,7 @@
         weightChart.update();
       }
 
-      // Aperçu d’ensemble
+      // Aperçu d’ensemble (segments droits, fenêtre 50–65 kg)
       if (!overviewChart) {
         overviewChart = new Chart(overviewCtx, {
           type: "line",
@@ -853,8 +928,8 @@
             datasets: [
               {
                 data: weights,
-                tension: 0.08,
-                borderWidth: 2,
+                tension: 0,
+                borderWidth: 2.2,
                 pointRadius: 0,
                 borderColor: "#22c55e",
                 fill: false
@@ -865,11 +940,20 @@
             responsive: true,
             maintainAspectRatio: false,
             interaction: { mode: "none" },
-            scales: { x: { display:false }, y:{ display:false } },
+            scales: {
+              x: { display:false },
+              y: {
+                display:false,
+                min:50,
+                max:65
+              }
+            },
             plugins: { legend:{display:false}, tooltip:{enabled:false} }
           }
         });
       } else {
+        overviewChart.options.scales.y.min = 50;
+        overviewChart.options.scales.y.max = 65;
         overviewChart.data.labels = labels;
         overviewChart.data.datasets[0].data = weights;
         overviewChart.update();
@@ -882,6 +966,8 @@
       tbodyElem = document.getElementById("weightTableBody");
       rangeLabelElem = document.getElementById("rangeLabel");
       lastValueElem = document.getElementById("lastValue");
+      speedGlobalElem = document.getElementById("speedGlobal");
+      speed7dElem = document.getElementById("speed7d");
       chartCtx = document.getElementById("weightChart").getContext("2d");
       overviewCtx = document.getElementById("overviewChart").getContext("2d");
 
