@@ -721,6 +721,7 @@
       refreshUI();
     }
 
+    // Calcule les vitesses globales, sur 7 jours et sur 72 h
     function computeSpeeds(all) {
       if (!speedGlobalElem || !speed7dElem || !speed72hElem) return;
 
@@ -737,7 +738,7 @@
       const last = all[all.length - 1];
       const lastDate = new Date(last.iso);
 
-      // Globale
+      // 1) Vitesse moyenne globale (depuis la première mesure)
       const totalDays = (lastDate - new Date(first.iso)) / msPerDay;
       let globalKgPerDay = null;
       if (totalDays > 0) {
@@ -745,21 +746,37 @@
         globalKgPerDay = deltaKg / totalDays;
       }
 
-      // Fenêtre générique
+      // 2) Fonction générique : vitesse sur N jours
       function windowSpeed(days) {
+        if (all.length < 2) return null;
+
         const cutoff = new Date(lastDate.getTime() - days * msPerDay);
         const windowPoints = all.filter(p => new Date(p.iso) >= cutoff);
-        if (windowPoints.length < 2) return null;
-        const wFirst = windowPoints[0];
-        const wLast = windowPoints[windowPoints.length - 1];
-        const wDays = (new Date(wLast.iso) - new Date(wFirst.iso)) / msPerDay;
-        if (wDays <= 0) return null;
-        const deltaW = wLast.weight - wFirst.weight;
-        return deltaW / wDays;
+
+        let startPoint, endPoint;
+
+        if (windowPoints.length >= 2) {
+          // Assez de points dans la fenêtre : on reste dans cette fenêtre
+          startPoint = windowPoints[0];
+          endPoint = windowPoints[windowPoints.length - 1];
+        } else {
+          // Pas assez de points dans la fenêtre,
+          // on prend les deux dernières mesures globales
+          endPoint = last;
+          startPoint = all[all.length - 2];
+        }
+
+        const daysInterval =
+          (new Date(endPoint.iso) - new Date(startPoint.iso)) / msPerDay;
+
+        if (daysInterval <= 0) return null;
+
+        const delta = endPoint.weight - startPoint.weight; // négatif si perte
+        return delta / daysInterval;
       }
 
       const sevenKgPerDay = windowSpeed(7);
-      const threeKgPerDay = windowSpeed(3);
+      const threeKgPerDay = windowSpeed(3); // 72 h = 3 jours
 
       const formatSpeed = (kgPerDay) => {
         if (kgPerDay === null) return "Données insuffisantes.";
