@@ -514,6 +514,7 @@
         <div class="overview-metrics">
           <span id="speedGlobal"></span>
           <span id="speed7d"></span>
+          <span id="speed72h"></span>
         </div>
       </div>
 
@@ -578,10 +579,9 @@
   </div>
 
   <script>
-    // nouveau storageKey pour repartir proprement des 14 valeurs Santé
     const storageKey = "np_weight_data_v2";
 
-    // Série par défaut EXACTEMENT comme Santé (14 valeurs de 63,2 à 52,8)
+    // Série initiale : 14 valeurs Santé de 63,2 à 52,8 kg
     const defaultData = [
       { iso: "2024-03-22T16:36:00", weight: 63.2 },
       { iso: "2024-04-05T16:31:00", weight: 61.7 },
@@ -600,7 +600,7 @@
     ];
 
     let tbodyElem, rangeLabelElem, lastValueElem;
-    let speedGlobalElem, speed7dElem;
+    let speedGlobalElem, speed7dElem, speed72hElem;
     let chartCtx, overviewCtx;
     let weightChart, overviewChart;
 
@@ -722,43 +722,44 @@
     }
 
     function computeSpeeds(all) {
-      if (!speedGlobalElem || !speed7dElem) return;
+      if (!speedGlobalElem || !speed7dElem || !speed72hElem) return;
 
       if (!all || all.length < 2) {
         speedGlobalElem.textContent = "";
         speed7dElem.textContent = "";
+        speed72hElem.textContent = "";
         return;
       }
 
       const msPerDay = 24 * 60 * 60 * 1000;
 
-      // Vitesse moyenne globale (depuis la première mesure)
       const first = all[0];
       const last = all[all.length - 1];
-      const totalDays = (new Date(last.iso) - new Date(first.iso)) / msPerDay;
+      const lastDate = new Date(last.iso);
 
+      // Globale
+      const totalDays = (lastDate - new Date(first.iso)) / msPerDay;
       let globalKgPerDay = null;
       if (totalDays > 0) {
         const deltaKg = last.weight - first.weight; // négatif si perte
         globalKgPerDay = deltaKg / totalDays;
       }
 
-      // Vitesse moyenne sur les 7 derniers jours
-      const lastDate = new Date(last.iso);
-      const cutoff = new Date(lastDate.getTime() - 7 * msPerDay);
-      const windowPoints = all.filter(p => new Date(p.iso) >= cutoff);
-
-      let sevenKgPerDay = null;
-      if (windowPoints.length >= 2) {
-        const firstW = windowPoints[0];
-        const lastW = windowPoints[windowPoints.length - 1];
-        const windowDays = (new Date(lastW.iso) - new Date(firstW.iso)) / msPerDay;
-
-        if (windowDays > 0) {
-          const deltaWindowKg = lastW.weight - firstW.weight;
-          sevenKgPerDay = deltaWindowKg / windowDays;
-        }
+      // Fenêtre générique
+      function windowSpeed(days) {
+        const cutoff = new Date(lastDate.getTime() - days * msPerDay);
+        const windowPoints = all.filter(p => new Date(p.iso) >= cutoff);
+        if (windowPoints.length < 2) return null;
+        const wFirst = windowPoints[0];
+        const wLast = windowPoints[windowPoints.length - 1];
+        const wDays = (new Date(wLast.iso) - new Date(wFirst.iso)) / msPerDay;
+        if (wDays <= 0) return null;
+        const deltaW = wLast.weight - wFirst.weight;
+        return deltaW / wDays;
       }
+
+      const sevenKgPerDay = windowSpeed(7);
+      const threeKgPerDay = windowSpeed(3);
 
       const formatSpeed = (kgPerDay) => {
         if (kgPerDay === null) return "Données insuffisantes.";
@@ -777,6 +778,9 @@
 
       speed7dElem.textContent =
         "Sur les 7 derniers jours : " + formatSpeed(sevenKgPerDay);
+
+      speed72hElem.textContent =
+        "Sur les dernières 72 h : " + formatSpeed(threeKgPerDay);
     }
 
     function refreshUI() {
@@ -968,6 +972,7 @@
       lastValueElem = document.getElementById("lastValue");
       speedGlobalElem = document.getElementById("speedGlobal");
       speed7dElem = document.getElementById("speed7d");
+      speed72hElem = document.getElementById("speed72h");
       chartCtx = document.getElementById("weightChart").getContext("2d");
       overviewCtx = document.getElementById("overviewChart").getContext("2d");
 
@@ -1009,7 +1014,6 @@
 
       refreshUI();
 
-      // Disparition automatique de l'intro
       const introDuration = window.matchMedia("(prefers-reduced-motion: reduce)").matches
         ? 250
         : 2200;
