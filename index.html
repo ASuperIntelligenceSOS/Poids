@@ -163,26 +163,6 @@
       .panel { padding: 20px 18px 22px; }
     }
 
-    .panel::before {
-      content: "";
-      position: absolute;
-      inset: -40%;
-      background: conic-gradient(from 180deg,
-                rgba(56, 189, 248, 0.2),
-                rgba(168, 85, 247, 0.14),
-                rgba(56, 189, 248, 0.2));
-      opacity: 0;
-      animation: borderGlow 12s ease-in-out infinite;
-      mix-blend-mode: soft-light;
-      pointer-events: none;
-    }
-
-    @keyframes borderGlow {
-      0%,30% {opacity:0;}
-      50% {opacity:0.4;}
-      100% {opacity:0;}
-    }
-
     .panel-header {
       display:flex;
       justify-content:space-between;
@@ -221,7 +201,7 @@
     }
     @media(min-width:640px){ .overview-inner{height:170px;} }
 
-    /* Courbe principale scrollable */
+    /* Courbe principale */
     .chart-scroll {
       width:100%;
       overflow-x:auto;
@@ -415,7 +395,7 @@
         </div>
       </div>
 
-      <!-- Courbe principale scrollable -->
+      <!-- Courbe principale -->
       <div class="chart-scroll">
         <div class="chart-scroll-inner">
           <div id="chart-container">
@@ -478,7 +458,7 @@
   <script>
     const storageKey = "np_weight_data_v1";
 
-    // Série par défaut, jusqu'à 52,8 (comme dans Santé)
+    // Série par défaut EXACTEMENT comme Santé (14 valeurs de 63,2 à 52,8)
     const defaultData = [
       { iso: "2024-03-22T16:36:00", weight: 63.2 },
       { iso: "2024-04-05T16:31:00", weight: 61.7 },
@@ -504,7 +484,7 @@
       let stored;
       try {
         stored = JSON.parse(localStorage.getItem(storageKey) || "[]");
-      } catch (e) {
+      } catch {
         stored = [];
       }
       if (!Array.isArray(stored) || stored.length === 0) {
@@ -521,7 +501,7 @@
       let stored;
       try {
         stored = JSON.parse(localStorage.getItem(storageKey) || "[]");
-      } catch (e) {
+      } catch {
         stored = [];
       }
       if (!Array.isArray(stored)) stored = [];
@@ -555,7 +535,7 @@
 
     function checkPassword(actionLabel) {
       const input = window.prompt("Mot de passe requis pour " + actionLabel + " :");
-      if (input === null) return false;
+      if (input === null) return false; // Annuler = on arrête là
       const norm = input.trim().toLowerCase();
       if (norm === "pac23121983" || norm === "pac231283") {
         return true;
@@ -564,7 +544,7 @@
       return false;
     }
 
-    // Plugin pour labels des points (avec gestion spéciale du dernier)
+    // Plugin labels au-dessus des points (gestion spéciale du dernier)
     const valueLabelPlugin = {
       id: "valueLabelPlugin",
       afterDatasetsDraw(chart) {
@@ -583,7 +563,7 @@
           if (value == null) return;
 
           if (index === total - 1) {
-            // Dernier point toujours affiché
+            // dernier point toujours affiché
           } else {
             if (index % step !== 0) return;
             if (index >= total - 2) return;
@@ -620,7 +600,6 @@
     function refreshUI() {
       const all = getAllData();
 
-      // Tableau
       tbodyElem.innerHTML = "";
       all.forEach(p => {
         const tr = document.createElement("tr");
@@ -635,18 +614,14 @@
 
         const labelForConfirm = tdDate.textContent + " – " + tdWeight.textContent + " kg";
 
+        // Un seul handler "click" (pas de touchstart) pour éviter les doubles demandes
         tr.addEventListener("click", () => {
           deleteEntry(p.id, labelForConfirm);
         });
 
-        tr.addEventListener("touchstart", () => {
-          deleteEntry(p.id, labelForConfirm);
-        }, { passive: true });
-
         tbodyElem.appendChild(tr);
       });
 
-      // Méta
       if (all.length > 0) {
         rangeLabelElem.textContent =
           formatLabelFromIso(all[0].iso).split("–")[0].trim() +
@@ -664,7 +639,6 @@
 
       const labels = all.map(p => formatLabelFromIso(p.iso));
       const weights = all.map(p => p.weight);
-
       if (weights.length === 0) return;
 
       const minW = Math.min(...weights);
@@ -762,7 +736,7 @@
         weightChart.update();
       }
 
-      // Aperçu d’ensemble, moins lissé, plus "vertigineux"
+      // Aperçu d’ensemble
       if (!overviewChart) {
         overviewChart = new Chart(overviewCtx, {
           type: "line",
