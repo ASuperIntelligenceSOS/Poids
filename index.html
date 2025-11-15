@@ -24,9 +24,7 @@
       --radius-lg: 18px;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -106,11 +104,7 @@
       }
     }
 
-    .title-block {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
+    .title-block { display: flex; flex-direction: column; gap: 4px; }
 
     .title {
       font-size: 24px;
@@ -142,20 +136,9 @@
       color: var(--text-soft);
       max-width: 620px;
     }
+    .subtitle strong { display:block; color:#e5e7eb; margin-bottom:2px; }
 
-    .subtitle strong {
-      display: block;
-      color: #e5e7eb;
-      margin-bottom: 2px;
-    }
-
-    .chip-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 4px;
-    }
-
+    .chip-row { display:flex; flex-wrap:wrap; gap:8px; margin-top:4px; }
     .chip {
       font-size: 11px;
       padding: 3px 9px;
@@ -189,268 +172,207 @@
                 rgba(168, 85, 247, 0.14),
                 rgba(56, 189, 248, 0.2));
       opacity: 0;
-      transform: translate3d(0, 0, 0);
       animation: borderGlow 12s ease-in-out infinite;
       mix-blend-mode: soft-light;
       pointer-events: none;
     }
 
     @keyframes borderGlow {
-      0%, 30% { opacity: 0; }
-      50%     { opacity: 0.4; }
-      100%    { opacity: 0; }
+      0%,30% {opacity:0;}
+      50% {opacity:0.4;}
+      100% {opacity:0;}
     }
 
     .panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      margin-bottom: 10px;
-      gap: 10px;
+      display:flex;
+      justify-content:space-between;
+      align-items:baseline;
+      margin-bottom:10px;
+      gap:10px;
     }
 
     .panel-title {
-      font-size: 14px;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: #cbd5f5;
+      font-size:14px;
+      letter-spacing:0.18em;
+      text-transform:uppercase;
+      color:#cbd5f5;
     }
 
     .panel-meta {
-      font-size: 11px;
-      color: var(--text-soft);
-      text-align: right;
+      font-size:11px;
+      color:var(--text-soft);
+      text-align:right;
     }
 
-    /* Aperçu global de la courbe */
-    .overview-container {
-      margin-bottom: 10px;
-    }
-
+    /* Aperçu global */
+    .overview-container { margin-bottom:10px; }
     .overview-label {
-      text-align: center;
-      font-size: 12px;
-      color: #22c55e;
-      letter-spacing: 0.04em;
-      margin-bottom: 4px;
+      text-align:center;
+      font-size:12px;
+      color:#22c55e;
+      letter-spacing:0.04em;
+      margin-bottom:4px;
     }
-
     .overview-inner {
-      width: 80%;
-      max-width: 620px;
-      margin: 0 auto;
-      height: 150px;
+      width:80%;
+      max-width:620px;
+      margin:0 auto;
+      height:150px;
     }
+    @media(min-width:640px){ .overview-inner{height:170px;} }
 
-    @media (min-width: 640px) {
-      .overview-inner { height: 170px; }
-    }
-
-    /* Zone scrollable pour la courbe principale */
+    /* Courbe principale scrollable */
     .chart-scroll {
-      width: 100%;
-      overflow-x: auto;
-      padding-bottom: 6px;
-      -webkit-overflow-scrolling: touch;
+      width:100%;
+      overflow-x:auto;
+      padding-bottom:6px;
+      -webkit-overflow-scrolling:touch;
     }
-
-    .chart-scroll-inner {
-      min-width: 720px;
-    }
-
+    .chart-scroll-inner { min-width:720px; }
     #chart-container {
-      position: relative;
-      width: 100%;
-      height: 280px;
+      position:relative;
+      width:100%;
+      height:280px;
+    }
+    @media(min-width:640px){
+      .chart-scroll-inner{min-width:900px;}
+      #chart-container{height:340px;}
     }
 
-    @media (min-width: 640px) {
-      .chart-scroll-inner { min-width: 900px; }
-      #chart-container { height: 340px; }
-    }
-
-    canvas {
-      width: 100% !important;
-      height: 100% !important;
-    }
+    canvas { width:100%!important; height:100%!important; }
 
     .add-form-wrapper {
-      margin: 10px 0 12px;
-      padding: 10px 10px 12px;
-      border-radius: 14px;
-      border: 1px solid rgba(148, 163, 184, 0.45);
+      margin:10px 0 12px;
+      padding:10px 10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(148,163,184,0.45);
       background:
-        radial-gradient(circle at 0 0, rgba(56, 189, 248, 0.14), transparent 60%),
-        radial-gradient(circle at 100% 100%, rgba(168, 85, 247, 0.16), transparent 60%),
-        rgba(15, 23, 42, 0.86);
-      backdrop-filter: blur(14px);
+        radial-gradient(circle at 0 0, rgba(56,189,248,0.14), transparent 60%),
+        radial-gradient(circle at 100% 100%, rgba(168,85,247,0.16), transparent 60%),
+        rgba(15,23,42,0.86);
+      backdrop-filter:blur(14px);
     }
 
-    .add-form {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .add-form-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
+    .add-form { display:flex; flex-direction:column; gap:8px; }
+    .add-form-row { display:flex; flex-wrap:wrap; gap:8px; }
 
     .field {
-      flex: 1 1 90px;
-      min-width: 90px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
+      flex:1 1 90px;
+      min-width:90px;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
     }
-
     .field label {
-      font-size: 10px;
-      color: var(--text-soft);
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
+      font-size:10px;
+      color:var(--text-soft);
+      letter-spacing:0.12em;
+      text-transform:uppercase;
     }
-
     .field input {
-      background: #020617;
-      color: #e5e7eb;
-      border-radius: 8px;
-      border: 1px solid rgba(148, 163, 184, 0.6);
-      padding: 6px 8px;
-      font-size: 13px;
-      outline: none;
+      background:#020617;
+      color:#e5e7eb;
+      border-radius:8px;
+      border:1px solid rgba(148,163,184,0.6);
+      padding:6px 8px;
+      font-size:13px;
+      outline:none;
     }
-
     .field input:focus {
-      border-color: #38bdf8;
-      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.45);
+      border-color:#38bdf8;
+      box-shadow:0 0 0 1px rgba(56,189,248,0.45);
     }
 
     .add-btn {
-      margin-top: 4px;
-      border: none;
-      border-radius: 999px;
-      padding: 8px 10px;
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-      cursor: pointer;
-      color: #020617;
-      background: linear-gradient(90deg, var(--accent-1), var(--accent-2), var(--accent-3));
-      background-size: 180% 180%;
-      animation: btnGradient 12s ease infinite;
-      box-shadow: 0 12px 40px rgba(56, 189, 248, 0.45);
+      margin-top:4px;
+      border:none;
+      border-radius:999px;
+      padding:8px 10px;
+      font-size:11px;
+      font-weight:600;
+      text-transform:uppercase;
+      letter-spacing:0.14em;
+      cursor:pointer;
+      color:#020617;
+      background:linear-gradient(90deg,var(--accent-1),var(--accent-2),var(--accent-3));
+      background-size:180% 180%;
+      animation:btnGradient 12s ease infinite;
+      box-shadow:0 12px 40px rgba(56,189,248,0.45);
     }
-
     .add-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 18px 50px rgba(56, 189, 248, 0.65);
+      transform:translateY(-1px);
+      box-shadow:0 18px 50px rgba(56,189,248,0.65);
     }
-
     .add-btn:active {
-      transform: translateY(0);
-      box-shadow: 0 8px 24px rgba(56, 189, 248, 0.5);
+      transform:translateY(0);
+      box-shadow:0 8px 24px rgba(56,189,248,0.5);
     }
-
     @keyframes btnGradient {
-      0%   { background-position: 0% 50%; }
-      50%  { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
+      0%{background-position:0% 50%;}
+      50%{background-position:100% 50%;}
+      100%{background-position:0% 50%;}
     }
 
     table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12px;
-      margin-top: 8px;
+      width:100%;
+      border-collapse:collapse;
+      font-size:12px;
+      margin-top:8px;
     }
-
-    th, td {
-      padding: 6px 6px;
-      border-bottom: 1px solid rgba(31, 41, 55, 0.9);
+    th,td {
+      padding:6px 6px;
+      border-bottom:1px solid rgba(31,41,55,0.9);
     }
-
     th {
-      text-align: left;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      font-size: 11px;
-      color: var(--text-soft);
+      text-align:left;
+      font-weight:500;
+      text-transform:uppercase;
+      letter-spacing:0.1em;
+      font-size:11px;
+      color:var(--text-soft);
     }
+    tr:nth-child(even) td { background:rgba(15,23,42,0.7); }
+    tr:hover td { background:rgba(15,23,42,0.95); }
 
-    tr:nth-child(even) td { background: rgba(15, 23, 42, 0.7); }
-
-    tr:hover td { background: rgba(15, 23, 42, 0.95); }
+    tr.data-row { cursor:pointer; }
 
     .weight-cell {
-      text-align: right;
-      font-variant-numeric: tabular-nums;
+      text-align:right;
+      font-variant-numeric:tabular-nums;
     }
 
     .footer-note {
-      margin-top: 10px;
-      font-size: 11px;
-      color: var(--text-soft);
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-      flex-wrap: wrap;
+      margin-top:10px;
+      font-size:11px;
+      color:var(--text-soft);
+      display:flex;
+      justify-content:space-between;
+      gap:8px;
+      flex-wrap:wrap;
     }
 
     .footer-extra {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      max-width: 340px;
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      max-width:360px;
     }
 
     .legend-dot {
-      width: 9px;
-      height: 9px;
-      border-radius: 999px;
-      display: inline-block;
-      margin-right: 6px;
-      background: radial-gradient(circle at 30% 30%, #ffffff, var(--accent-1));
-      box-shadow: 0 0 8px rgba(56, 189, 248, 0.8);
+      width:9px;
+      height:9px;
+      border-radius:999px;
+      display:inline-block;
+      margin-right:6px;
+      background:radial-gradient(circle at 30% 30%, #ffffff, var(--accent-1));
+      box-shadow:0 0 8px rgba(56,189,248,0.8);
     }
-
     .legend {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 11px;
-      color: var(--text-soft);
-    }
-
-    /* suppression d’une valeur */
-    tr.data-row {
-      position: relative;
-    }
-
-    .delete-btn {
-      position: absolute;
-      right: 8px;
-      top: 50%;
-      transform: translateY(-50%);
-      border: none;
-      background: #dc2626;
-      color: #ffffff;
-      font-size: 11px;
-      padding: 3px 8px;
-      border-radius: 999px;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.18s ease, transform 0.18s ease;
-    }
-
-    tr.data-row:hover .delete-btn,
-    tr.data-row.show-delete .delete-btn {
-      opacity: 1;
-      pointer-events: auto;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-size:11px;
+      color:var(--text-soft);
     }
   </style>
 </head>
@@ -485,7 +407,7 @@
         </div>
       </div>
 
-      <!-- Aperçu global -->
+      <!-- Aperçu d’ensemble -->
       <div class="overview-container">
         <div class="overview-label">Aperçu d’ensemble</div>
         <div class="overview-inner">
@@ -547,7 +469,7 @@
         <div class="footer-extra">
           <div>Vue globale en haut, courbe principale défilante si nécessaire.</div>
           <div>Pour rentrer une valeur, entrer le mot de passe (3 premières lettres + date de naissance).</div>
-          <div>Pour supprimer une valeur, faites apparaître la corbeille sur la ligne puis validez avec le mot de passe.</div>
+          <div>Pour supprimer une valeur, cliquez ou touchez la ligne correspondante, confirmez puis entrez le mot de passe.</div>
         </div>
       </div>
     </section>
@@ -556,8 +478,8 @@
   <script>
     const storageKey = "np_weight_data_v1";
 
-    // Mesures initiales (issues de ton téléphone) : non supprimables
-    const initialData = [
+    // Série par défaut, jusqu'à 52,8 (comme dans Santé)
+    const defaultData = [
       { iso: "2024-03-22T16:36:00", weight: 63.2 },
       { iso: "2024-04-05T16:31:00", weight: 61.7 },
       { iso: "2024-04-17T14:01:00", weight: 60.1 },
@@ -578,8 +500,25 @@
     let chartCtx, overviewCtx;
     let weightChart, overviewChart;
 
+    function seedIfEmpty() {
+      let stored;
+      try {
+        stored = JSON.parse(localStorage.getItem(storageKey) || "[]");
+      } catch (e) {
+        stored = [];
+      }
+      if (!Array.isArray(stored) || stored.length === 0) {
+        const seeded = defaultData.map((p, index) => ({
+          iso: p.iso,
+          weight: p.weight,
+          id: "seed-" + index
+        }));
+        localStorage.setItem(storageKey, JSON.stringify(seeded));
+      }
+    }
+
     function getStoredData() {
-      let stored = [];
+      let stored;
       try {
         stored = JSON.parse(localStorage.getItem(storageKey) || "[]");
       } catch (e) {
@@ -594,10 +533,8 @@
     }
 
     function getAllData() {
-      const all = initialData.concat(getStoredData());
-      all.sort(function(a, b) {
-        return new Date(a.iso) - new Date(b.iso);
-      });
+      const all = getStoredData().slice();
+      all.sort((a, b) => new Date(a.iso) - new Date(b.iso));
       return all;
     }
 
@@ -627,10 +564,10 @@
       return false;
     }
 
-    // Plugin : labels au-dessus des points, avec gestion du dernier point
+    // Plugin pour labels des points (avec gestion spéciale du dernier)
     const valueLabelPlugin = {
       id: "valueLabelPlugin",
-      afterDatasetsDraw: function(chart) {
+      afterDatasetsDraw(chart) {
         const ctx = chart.ctx;
         ctx.save();
         const dataset = chart.data.datasets[0];
@@ -641,12 +578,12 @@
         if (total > 10) step = 2;
         if (total > 18) step = 3;
 
-        meta.data.forEach(function(point, index) {
+        meta.data.forEach((point, index) => {
           const value = dataset.data[index];
           if (value == null) return;
 
           if (index === total - 1) {
-            // dernier point: toujours affiché
+            // Dernier point toujours affiché
           } else {
             if (index % step !== 0) return;
             if (index >= total - 2) return;
@@ -672,11 +609,10 @@
       }
     };
 
-    function deleteStoredEntry(id) {
+    function deleteEntry(id, label) {
+      if (!window.confirm("Supprimer la mesure \"" + label + "\" ?")) return;
       if (!checkPassword("supprimer cette mesure")) return;
-      const filtered = getStoredData().filter(function(p) {
-        return p.id !== id;
-      });
+      const filtered = getStoredData().filter(p => p.id !== id);
       saveStoredData(filtered);
       refreshUI();
     }
@@ -686,7 +622,7 @@
 
       // Tableau
       tbodyElem.innerHTML = "";
-      all.forEach(function(p) {
+      all.forEach(p => {
         const tr = document.createElement("tr");
         tr.className = "data-row";
         const tdDate = document.createElement("td");
@@ -697,28 +633,20 @@
         tr.appendChild(tdDate);
         tr.appendChild(tdWeight);
 
-        const isStored = !!p.id;
-        if (isStored) {
-          const delBtn = document.createElement("button");
-          delBtn.type = "button";
-          delBtn.className = "delete-btn";
-          delBtn.textContent = "🗑";
-          delBtn.title = "Supprimer cette mesure";
-          delBtn.addEventListener("click", function(e) {
-            e.stopPropagation();
-            deleteStoredEntry(p.id);
-          });
-          tr.appendChild(delBtn);
+        const labelForConfirm = tdDate.textContent + " – " + tdWeight.textContent + " kg";
 
-          tr.addEventListener("touchstart", function() {
-            tr.classList.toggle("show-delete");
-          }, { passive: true });
-        }
+        tr.addEventListener("click", () => {
+          deleteEntry(p.id, labelForConfirm);
+        });
+
+        tr.addEventListener("touchstart", () => {
+          deleteEntry(p.id, labelForConfirm);
+        }, { passive: true });
 
         tbodyElem.appendChild(tr);
       });
 
-      // Métadonnées
+      // Méta
       if (all.length > 0) {
         rangeLabelElem.textContent =
           formatLabelFromIso(all[0].iso).split("–")[0].trim() +
@@ -734,11 +662,13 @@
         lastValueElem.textContent = "";
       }
 
-      const labels = all.map(function(p) { return formatLabelFromIso(p.iso); });
-      const weights = all.map(function(p) { return p.weight; });
+      const labels = all.map(p => formatLabelFromIso(p.iso));
+      const weights = all.map(p => p.weight);
 
-      const minW = Math.min.apply(null, weights);
-      const maxW = Math.max.apply(null, weights);
+      if (weights.length === 0) return;
+
+      const minW = Math.min(...weights);
+      const maxW = Math.max(...weights);
       const padding = 1.0;
       const suggestedMin = Math.floor((minW - padding) * 10) / 10;
       const suggestedMax = Math.ceil((maxW + padding) * 10) / 10;
@@ -748,7 +678,7 @@
         weightChart = new Chart(chartCtx, {
           type: "line",
           data: {
-            labels: labels,
+            labels,
             datasets: [
               {
                 label: "Poids (kg)",
@@ -761,15 +691,12 @@
                 pointBackgroundColor: "#f97316",
                 pointBorderWidth: 0,
                 fill: true,
-                backgroundColor: function(ctx) {
+                backgroundColor(ctx) {
                   const chart = ctx.chart;
                   const area = chart.chartArea;
                   if (!area) return "rgba(56, 189, 248, 0.25)";
                   const gradient = chart.ctx.createLinearGradient(
-                    0,
-                    area.top,
-                    0,
-                    area.bottom
+                    0, area.top, 0, area.bottom
                   );
                   gradient.addColorStop(0, "rgba(56, 189, 248, 0.35)");
                   gradient.addColorStop(1, "rgba(15, 23, 42, 0.1)");
@@ -782,11 +709,7 @@
             responsive: true,
             maintainAspectRatio: false,
             interaction: { mode: "index", intersect: false },
-            layout: {
-              padding: {
-                right: 40
-              }
-            },
+            layout: { padding: { right: 40 } },
             scales: {
               x: {
                 ticks: {
@@ -799,11 +722,11 @@
                 grid: { color: "rgba(55, 65, 81, 0.5)" }
               },
               y: {
-                suggestedMin: suggestedMin,
-                suggestedMax: suggestedMax,
+                suggestedMin,
+                suggestedMax,
                 ticks: {
                   color: "#9ca3af",
-                  callback: function(value) {
+                  callback(value) {
                     return Number(value).toFixed(1) + " kg";
                   }
                 },
@@ -821,13 +744,9 @@
                 titleFont: { family: "Space Grotesk", size: 12 },
                 bodyFont: { family: "Space Grotesk", size: 11 },
                 callbacks: {
-                  label: function(context) {
+                  label(context) {
                     const v = context.parsed.y;
-                    return (
-                      "Poids: " +
-                      Number(v).toFixed(1).replace(".", ",") +
-                      " kg"
-                    );
+                    return "Poids: " + Number(v).toFixed(1).replace(".", ",") + " kg";
                   }
                 }
               }
@@ -843,12 +762,12 @@
         weightChart.update();
       }
 
-      // Aperçu global : courbe plus "vertigineuse", moins lissée
+      // Aperçu d’ensemble, moins lissé, plus "vertigineux"
       if (!overviewChart) {
         overviewChart = new Chart(overviewCtx, {
           type: "line",
           data: {
-            labels: labels,
+            labels,
             datasets: [
               {
                 data: weights,
@@ -864,14 +783,8 @@
             responsive: true,
             maintainAspectRatio: false,
             interaction: { mode: "none" },
-            scales: {
-              x: { display: false },
-              y: { display: false }
-            },
-            plugins: {
-              legend: { display: false },
-              tooltip: { enabled: false }
-            }
+            scales: { x: { display:false }, y:{ display:false } },
+            plugins: { legend:{display:false}, tooltip:{enabled:false} }
           }
         });
       } else {
@@ -881,7 +794,9 @@
       }
     }
 
-    window.addEventListener("DOMContentLoaded", function() {
+    window.addEventListener("DOMContentLoaded", () => {
+      seedIfEmpty();
+
       tbodyElem = document.getElementById("weightTableBody");
       rangeLabelElem = document.getElementById("rangeLabel");
       lastValueElem = document.getElementById("lastValue");
@@ -897,7 +812,7 @@
       dateInput.value = now.toISOString().slice(0, 10);
       timeInput.value = now.toTimeString().slice(0, 5);
 
-      form.addEventListener("submit", function(e) {
+      form.addEventListener("submit", e => {
         e.preventDefault();
         const date = dateInput.value;
         const time = timeInput.value || "12:00";
@@ -912,11 +827,10 @@
         if (!checkPassword("ajouter cette mesure")) return;
 
         const iso = date + "T" + time + ":00";
-
         const stored = getStoredData();
         stored.push({
-          iso: iso,
-          weight: weight,
+          iso,
+          weight,
           id: Date.now().toString(36) + Math.random().toString(16).slice(2)
         });
         saveStoredData(stored);
