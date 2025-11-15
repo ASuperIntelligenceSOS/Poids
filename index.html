@@ -40,7 +40,6 @@
       overflow-x: hidden;
     }
 
-    /* grille lumineuse animée */
     .grid-overlay {
       position: fixed;
       inset: 0;
@@ -60,7 +59,6 @@
       to   { transform: translate3d(-60px, -60px, 0); }
     }
 
-    /* halo de couleur qui dérive lentement */
     .aurora {
       position: fixed;
       inset: -40%;
@@ -145,6 +143,12 @@
       max-width: 620px;
     }
 
+    .subtitle strong {
+      display: block;
+      color: #e5e7eb;
+      margin-bottom: 2px;
+    }
+
     .chip-row {
       display: flex;
       flex-wrap: wrap;
@@ -218,6 +222,18 @@
       text-align: right;
     }
 
+    /* Zone scrollable pour la courbe */
+    .chart-scroll {
+      width: 100%;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .chart-scroll-inner {
+      min-width: 720px;
+    }
+
     #chart-container {
       position: relative;
       width: 100%;
@@ -225,6 +241,9 @@
     }
 
     @media (min-width: 640px) {
+      .chart-scroll-inner {
+        min-width: 900px;
+      }
       #chart-container { height: 340px; }
     }
 
@@ -232,8 +251,6 @@
       width: 100% !important;
       height: 100% !important;
     }
-
-    /* Formulaire d’ajout de poids */
 
     .add-form-wrapper {
       margin: 10px 0 12px;
@@ -322,8 +339,6 @@
       100% { background-position: 0% 50%; }
     }
 
-    /* Tableau */
-
     table {
       width: 100%;
       border-collapse: collapse;
@@ -395,8 +410,8 @@
           <span class="title-badge">Nicolas • Quantum log</span>
         </div>
         <p class="subtitle">
-          Visualisation précise de ton poids au fil du temps,
-          dans une interface inspirée des interfaces IA et du néo coding.
+          <strong>Visualisation de l’évolution du poids de Nicolas.</strong>
+          Interface inspirée des systèmes IA et du néo-coding pour un suivi précis dans le temps.
         </p>
         <div class="chip-row">
           <span class="chip">Tracking ultra fin</span>
@@ -415,8 +430,12 @@
         </div>
       </div>
 
-      <div id="chart-container">
-        <canvas id="weightChart"></canvas>
+      <div class="chart-scroll">
+        <div class="chart-scroll-inner">
+          <div id="chart-container">
+            <canvas id="weightChart"></canvas>
+          </div>
+        </div>
       </div>
 
       <div class="add-form-wrapper">
@@ -471,7 +490,6 @@
   <script>
     const storageKey = "np_weight_data_v1";
 
-    // Données initiales issues de l’iPhone (ordre chronologique)
     const initialData = [
       { iso: "2024-03-22T16:36:00", weight: 63.2 },
       { iso: "2024-04-05T16:31:00", weight: 61.7 },
@@ -514,27 +532,40 @@
         stored = [];
       }
       const all = initialData.concat(stored);
-      all.sort((a, b) => new Date(a.iso) - new Date(b.iso));
+      all.sort(function(a, b) {
+        return new Date(a.iso) - new Date(b.iso);
+      });
       return all;
     }
 
+    // Plugin: labels lisibles, sans chevauchement massif
     const valueLabelPlugin = {
       id: "valueLabelPlugin",
-      afterDatasetsDraw(chart, args, pluginOptions) {
-        const { ctx } = chart;
+      afterDatasetsDraw: function(chart) {
+        const ctx = chart.ctx;
         ctx.save();
-        chart.data.datasets.forEach((dataset) => {
-          const meta = chart.getDatasetMeta(0);
-          meta.data.forEach((point, index) => {
-            const value = dataset.data[index];
-            if (value == null) return;
-            ctx.fillStyle = "#e5e7eb";
-            ctx.font = "11px Space Grotesk, system-ui, sans-serif";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "bottom";
-            const text = Number(value).toFixed(1).replace(".", ",");
-            ctx.fillText(text, point.x, point.y - 6);
-          });
+        const dataset = chart.data.datasets[0];
+        const meta = chart.getDatasetMeta(0);
+        const total = dataset.data.length;
+
+        // Plus il y a de points, plus on espace les labels
+        var step = 1;
+        if (total > 10) step = 2;
+        if (total > 18) step = 3;
+
+        meta.data.forEach(function(point, index) {
+          const value = dataset.data[index];
+          if (value == null) return;
+
+          // Afficher un point sur "step", + toujours le dernier
+          if (index !== total - 1 && index % step !== 0) return;
+
+          ctx.fillStyle = "#e5e7eb";
+          ctx.font = "11px Space Grotesk, system-ui, sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "bottom";
+          const text = Number(value).toFixed(1).replace(".", ",");
+          ctx.fillText(text, point.x, point.y - 6);
         });
         ctx.restore();
       }
@@ -543,9 +574,9 @@
     function refreshUI() {
       const all = getAllData();
 
-      // Table
+      // Tableau
       tbodyElem.innerHTML = "";
-      all.forEach((p) => {
+      all.forEach(function(p) {
         const tr = document.createElement("tr");
         const tdDate = document.createElement("td");
         const tdWeight = document.createElement("td");
@@ -557,7 +588,7 @@
         tbodyElem.appendChild(tr);
       });
 
-      // En-tête méta
+      // Méta en-tête
       if (all.length > 0) {
         rangeLabelElem.textContent =
           formatLabelFromIso(all[0].iso).split("–")[0].trim() +
@@ -573,8 +604,15 @@
         lastValueElem.textContent = "";
       }
 
-      const labels = all.map((p) => formatLabelFromIso(p.iso));
-      const weights = all.map((p) => p.weight);
+      const labels = all.map(function(p) { return formatLabelFromIso(p.iso); });
+      const weights = all.map(function(p) { return p.weight; });
+
+      // Range vertical un peu plus aéré
+      var minW = Math.min.apply(null, weights);
+      var maxW = Math.max.apply(null, weights);
+      var padding = 1.0;
+      var suggestedMin = Math.floor((minW - padding) * 10) / 10;
+      var suggestedMax = Math.ceil((maxW + padding) * 10) / 10;
 
       if (!weightChart) {
         weightChart = new Chart(chartCtx, {
@@ -593,15 +631,15 @@
                 pointBackgroundColor: "#f97316",
                 pointBorderWidth: 0,
                 fill: true,
-                backgroundColor: (ctx) => {
-                  const chart = ctx.chart;
-                  const { ctx: c, chartArea } = chart;
-                  if (!chartArea) return "rgba(56, 189, 248, 0.25)";
-                  const gradient = c.createLinearGradient(
+                backgroundColor: function(ctx) {
+                  var chart = ctx.chart;
+                  var area = chart.chartArea;
+                  if (!area) return "rgba(56, 189, 248, 0.25)";
+                  var gradient = chart.ctx.createLinearGradient(
                     0,
-                    chartArea.top,
+                    area.top,
                     0,
-                    chartArea.bottom
+                    area.bottom
                   );
                   gradient.addColorStop(0, "rgba(56, 189, 248, 0.35)");
                   gradient.addColorStop(1, "rgba(15, 23, 42, 0.1)");
@@ -617,19 +655,22 @@
             scales: {
               x: {
                 ticks: {
-                  maxRotation: 50,
-                  minRotation: 30,
+                  maxRotation: 45,
+                  minRotation: 25,
                   color: "#9ca3af",
                   autoSkip: true,
-                  maxTicksLimit: 7
+                  maxTicksLimit: 8
                 },
                 grid: { color: "rgba(55, 65, 81, 0.5)" }
               },
               y: {
+                suggestedMin: suggestedMin,
+                suggestedMax: suggestedMax,
                 ticks: {
                   color: "#9ca3af",
-                  callback: (value) =>
-                    Number(value).toFixed(1) + " kg"
+                  callback: function(value) {
+                    return Number(value).toFixed(1) + " kg";
+                  }
                 },
                 grid: { color: "rgba(55, 65, 81, 0.65)" }
               }
@@ -645,7 +686,7 @@
                 titleFont: { family: "Space Grotesk", size: 12 },
                 bodyFont: { family: "Space Grotesk", size: 11 },
                 callbacks: {
-                  label: (context) => {
+                  label: function(context) {
                     const v = context.parsed.y;
                     return (
                       "Poids: " +
@@ -660,13 +701,15 @@
           plugins: [valueLabelPlugin]
         });
       } else {
+        weightChart.options.scales.y.suggestedMin = suggestedMin;
+        weightChart.options.scales.y.suggestedMax = suggestedMax;
         weightChart.data.labels = labels;
         weightChart.data.datasets[0].data = weights;
         weightChart.update();
       }
     }
 
-    window.addEventListener("DOMContentLoaded", () => {
+    window.addEventListener("DOMContentLoaded", function() {
       tbodyElem = document.getElementById("weightTableBody");
       rangeLabelElem = document.getElementById("rangeLabel");
       lastValueElem = document.getElementById("lastValue");
@@ -677,12 +720,11 @@
       const timeInput = document.getElementById("timeInput");
       const weightInput = document.getElementById("weightInput");
 
-      // Pré-remplir date/heure avec maintenant
       const now = new Date();
       dateInput.value = now.toISOString().slice(0, 10);
       timeInput.value = now.toTimeString().slice(0, 5);
 
-      form.addEventListener("submit", (e) => {
+      form.addEventListener("submit", function(e) {
         e.preventDefault();
         const date = dateInput.value;
         const time = timeInput.value || "12:00";
@@ -702,7 +744,7 @@
         } catch (err) {
           stored = [];
         }
-        stored.push({ iso, weight });
+        stored.push({ iso: iso, weight: weight });
         localStorage.setItem(storageKey, JSON.stringify(stored));
 
         weightInput.value = "";
