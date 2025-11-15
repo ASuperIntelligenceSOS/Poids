@@ -222,7 +222,21 @@
       text-align: right;
     }
 
-    /* Zone scrollable pour la courbe */
+    /* Aperçu global de la courbe */
+    .overview-container {
+      margin-bottom: 10px;
+    }
+
+    .overview-inner {
+      width: 100%;
+      height: 120px;
+    }
+
+    @media (min-width: 640px) {
+      .overview-inner { height: 140px; }
+    }
+
+    /* Zone scrollable pour la courbe principale */
     .chart-scroll {
       width: 100%;
       overflow-x: auto;
@@ -241,9 +255,7 @@
     }
 
     @media (min-width: 640px) {
-      .chart-scroll-inner {
-        min-width: 900px;
-      }
+      .chart-scroll-inner { min-width: 900px; }
       #chart-container { height: 340px; }
     }
 
@@ -411,7 +423,6 @@
         </div>
         <p class="subtitle">
           <strong>Visualisation de l’évolution du poids de Nicolas.</strong>
-          Interface inspirée des systèmes IA et du néo-coding pour un suivi précis dans le temps.
         </p>
         <div class="chip-row">
           <span class="chip">Tracking ultra fin</span>
@@ -430,6 +441,14 @@
         </div>
       </div>
 
+      <!-- Aperçu global (vue d’ensemble) -->
+      <div class="overview-container">
+        <div class="overview-inner">
+          <canvas id="overviewChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Courbe principale scrollable -->
       <div class="chart-scroll">
         <div class="chart-scroll-inner">
           <div id="chart-container">
@@ -481,7 +500,7 @@
           <span>Chaque point représente une mesure exacte enregistrée.</span>
         </div>
         <div>
-          Les nouvelles valeurs sont mémorisées localement dans ton navigateur (localStorage).
+          Vue globale en haut, courbe principale défilante si nécessaire.
         </div>
       </div>
     </section>
@@ -507,7 +526,9 @@
       { iso: "2024-11-15T15:49:00", weight: 52.8 }
     ];
 
-    let tbodyElem, rangeLabelElem, lastValueElem, chartCtx, weightChart;
+    let tbodyElem, rangeLabelElem, lastValueElem;
+    let chartCtx, overviewCtx;
+    let weightChart, overviewChart;
 
     function formatLabelFromIso(iso) {
       const d = new Date(iso);
@@ -538,7 +559,8 @@
       return all;
     }
 
-    // Plugin: labels lisibles, sans chevauchement massif
+    // Plugin: labels lisibles, sans chevauchement massif,
+    // et avec plus de marge pour la dernière valeur.
     const valueLabelPlugin = {
       id: "valueLabelPlugin",
       afterDatasetsDraw: function(chart) {
@@ -548,7 +570,6 @@
         const meta = chart.getDatasetMeta(0);
         const total = dataset.data.length;
 
-        // Plus il y a de points, plus on espace les labels
         var step = 1;
         if (total > 10) step = 2;
         if (total > 18) step = 3;
@@ -560,12 +581,21 @@
           // Afficher un point sur "step", + toujours le dernier
           if (index !== total - 1 && index % step !== 0) return;
 
+          let textX = point.x;
+          let textAlign = "center";
+
+          // Dernier point: on aligne à droite et on décale un peu vers la gauche
+          if (index === total - 1) {
+            textAlign = "right";
+            textX = point.x - 4;
+          }
+
           ctx.fillStyle = "#e5e7eb";
           ctx.font = "11px Space Grotesk, system-ui, sans-serif";
-          ctx.textAlign = "center";
+          ctx.textAlign = textAlign;
           ctx.textBaseline = "bottom";
           const text = Number(value).toFixed(1).replace(".", ",");
-          ctx.fillText(text, point.x, point.y - 6);
+          ctx.fillText(text, textX, point.y - 6);
         });
         ctx.restore();
       }
@@ -607,13 +637,13 @@
       const labels = all.map(function(p) { return formatLabelFromIso(p.iso); });
       const weights = all.map(function(p) { return p.weight; });
 
-      // Range vertical un peu plus aéré
       var minW = Math.min.apply(null, weights);
       var maxW = Math.max.apply(null, weights);
       var padding = 1.0;
       var suggestedMin = Math.floor((minW - padding) * 10) / 10;
       var suggestedMax = Math.ceil((maxW + padding) * 10) / 10;
 
+      // Courbe principale
       if (!weightChart) {
         weightChart = new Chart(chartCtx, {
           type: "line",
@@ -652,6 +682,11 @@
             responsive: true,
             maintainAspectRatio: false,
             interaction: { mode: "index", intersect: false },
+            layout: {
+              padding: {
+                right: 26   // laisse plus de place au dernier label
+              }
+            },
             scales: {
               x: {
                 ticks: {
@@ -707,6 +742,47 @@
         weightChart.data.datasets[0].data = weights;
         weightChart.update();
       }
+
+      // Aperçu global
+      if (!overviewChart) {
+        overviewChart = new Chart(overviewCtx, {
+          type: "line",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                data: weights,
+                tension: 0.25,
+                borderWidth: 2,
+                pointRadius: 0,
+                borderColor: "#22c55e",
+                fill: false
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: "none" },
+            scales: {
+              x: {
+                display: false
+              },
+              y: {
+                display: false
+              }
+            },
+            plugins: {
+              legend: { display: false },
+              tooltip: { enabled: false }
+            }
+          }
+        });
+      } else {
+        overviewChart.data.labels = labels;
+        overviewChart.data.datasets[0].data = weights;
+        overviewChart.update();
+      }
     }
 
     window.addEventListener("DOMContentLoaded", function() {
@@ -714,6 +790,7 @@
       rangeLabelElem = document.getElementById("rangeLabel");
       lastValueElem = document.getElementById("lastValue");
       chartCtx = document.getElementById("weightChart").getContext("2d");
+      overviewCtx = document.getElementById("overviewChart").getContext("2d");
 
       const form = document.getElementById("addForm");
       const dateInput = document.getElementById("dateInput");
