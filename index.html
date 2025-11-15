@@ -5,9 +5,7 @@
   <title>Weight Timeline – Nicolas</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Chart.js + adaptateur dates pour l’aperçu -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -461,7 +459,7 @@
           <span>Chaque point représente une mesure exacte enregistrée.</span>
         </div>
         <div class="footer-extra">
-          <div>Vue globale en haut à partir de mars 2025, courbe principale défilante si nécessaire.</div>
+          <div>Vue globale en haut, courbe principale défilante si nécessaire.</div>
           <div>Pour rentrer une valeur, entrer le mot de passe (3 premières lettres + date de naissance).</div>
           <div>Pour supprimer une valeur, cliquez ou touchez la ligne correspondante, confirmez puis entrez le mot de passe.</div>
         </div>
@@ -472,7 +470,7 @@
   <script>
     const storageKey = "np_weight_data_v2";
 
-    // Mesures initiales
+    // Mesures initiales (celles de ton iPhone)
     const defaultData = [
       { iso: "2024-03-22T16:36:00", weight: 63.2 },
       { iso: "2024-04-05T16:31:00", weight: 61.7 },
@@ -750,15 +748,11 @@
         weightChart.update();
       }
 
-      // APERÇU D’ENSEMBLE : de mars 2025 jusqu’à la fin du mois de la dernière mesure
-      const lastDate = new Date(all[all.length - 1].iso);
-      const minTime = new Date(2025, 2, 1);  // 1er mars 2025 (mois 0 = janvier)
-      const maxTime = new Date(lastDate.getFullYear(), lastDate.getMonth() + 1, 1); // début du mois suivant -> donne toute la largeur du mois courant
-
-      const overviewData = all.map(p => ({
-        x: new Date(p.iso),
-        y: p.weight
-      }));
+      // APERÇU D’ENSEMBLE : même courbe que la principale, en mini
+      const overviewData = weights.map((w, idx) => ({ x: idx, y: w }));
+      const minY = 45;
+      const maxY = 70;
+      const maxX = Math.max(1, overviewData.length - 1);
 
       if (!overviewChart) {
         overviewChart = new Chart(overviewCtx, {
@@ -782,30 +776,15 @@
             interaction: { mode: "none" },
             scales: {
               x: {
-                type: "time",
-                min: minTime,
-                max: maxTime,
-                time: {
-                  unit: "month",
-                  displayFormats: { month: "LLL" }
-                },
-                ticks: {
-                  color: "#64748b",
-                  maxRotation: 0,
-                  autoSkip: true,
-                  callback(value) {
-                    const d = new Date(value);
-                    return d.toLocaleDateString("fr-FR", { month: "narrow" }); // M, A, M, J...
-                  }
-                },
-                grid: {
-                  color: "rgba(51, 65, 85, 0.35)",
-                  borderColor: "rgba(148, 163, 184, 0.5)"
-                }
+                type: "linear",
+                min: 0,
+                max: maxX,
+                display: false,
+                grid: { display: false }
               },
               y: {
-                min: 45,
-                max: 70,
+                min: minY,
+                max: maxY,
                 display: false,
                 grid: { display: false }
               }
@@ -817,8 +796,8 @@
           }
         });
       } else {
-        overviewChart.options.scales.x.min = minTime;
-        overviewChart.options.scales.x.max = maxTime;
+        overviewChart.options.scales.x.min = 0;
+        overviewChart.options.scales.x.max = maxX;
         overviewChart.data.datasets[0].data = overviewData;
         overviewChart.update();
       }
