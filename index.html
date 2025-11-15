@@ -723,72 +723,82 @@
 
     // Vitesse globale, sur 7 jours et sur 72 h, calculs strictement basés sur les données présentes
     function computeSpeeds(all) {
-      if (!speedGlobalElem || !speed7dElem || !speed72hElem) return;
+  if (!speedGlobalElem || !speed7dElem || !speed72hElem) return;
 
-      if (!all || all.length < 2) {
-        speedGlobalElem.textContent = "";
-        speed7dElem.textContent = "";
-        speed72hElem.textContent = "";
-        return;
-      }
+  if (!all || all.length < 2) {
+    speedGlobalElem.textContent = "";
+    speed7dElem.textContent = "";
+    speed72hElem.textContent = "";
+    return;
+  }
 
-      const msPerDay = 24 * 60 * 60 * 1000;
+  const msPerDay = 24 * 60 * 60 * 1000;
 
-      const first = all[0];
-      const last = all[all.length - 1];
-      const lastDate = new Date(last.iso);
+  const first = all[0];
+  const last = all[all.length - 1];
+  const firstDate = new Date(first.iso);
+  const lastDate = new Date(last.iso);
 
-      // 1) Vitesse moyenne globale (première -> dernière)
-      const totalDays = (lastDate - new Date(first.iso)) / msPerDay;
-      let globalKgPerDay = null;
-      if (totalDays > 0) {
-        const deltaKg = last.weight - first.weight; // <0 = perte ; >0 = prise
-        globalKgPerDay = deltaKg / totalDays;
-      }
+  const totalDays = (lastDate - firstDate) / msPerDay;
+  let globalKgPerDay = null;
+  if (totalDays > 0) {
+    const deltaKg = last.weight - first.weight; // < 0 = perte ; > 0 = prise
+    globalKgPerDay = deltaKg / totalDays;
+  }
 
-      // 2) Vitesse sur une fenêtre de N jours (strictement à l'intérieur de la fenêtre)
-      function windowSpeed(days) {
-        const cutoff = new Date(lastDate.getTime() - days * msPerDay);
-        const windowPoints = all.filter(p => new Date(p.iso) >= cutoff);
+  // Calcul de vitesse sur une fenêtre de N jours, avec fallback
+  function speedUsingWindow(days) {
+    const cutoff = new Date(lastDate.getTime() - days * msPerDay);
+    const windowPoints = all.filter(p => new Date(p.iso) >= cutoff);
 
-        // Il faut au moins deux mesures dans la fenêtre, sinon mathématiquement impossible
-        if (windowPoints.length < 2) return null;
+    let a, b;
 
-        const wFirst = windowPoints[0];
-        const wLast = windowPoints[windowPoints.length - 1];
-        const wDays =
-          (new Date(wLast.iso) - new Date(wFirst.iso)) / msPerDay;
-
-        if (wDays <= 0) return null;
-
-        const delta = wLast.weight - wFirst.weight; // <0 = perte ; >0 = prise
-        return delta / wDays;
-      }
-
-      const sevenKgPerDay = windowSpeed(7);
-      const threeKgPerDay = windowSpeed(3); // 72 h = 3 jours
-
-      const formatSpeed = (kgPerDay) => {
-        if (kgPerDay === null) return "Données insuffisantes.";
-        const gPerDay = kgPerDay * 1000;
-        const absG = Math.abs(gPerDay);
-        const rounded = Math.round(absG);
-
-        if (rounded < 1) return "≈ 0 g/j (stable)";
-
-        const direction = kgPerDay < 0 ? "perte" : "prise";
-        return "≈ " + rounded.toLocaleString("fr-FR") + " g/j de " + direction;
-      };
-
-      speedGlobalElem.textContent =
-        "Vitesse moyenne globale : " + formatSpeed(globalKgPerDay);
-
-      speed7dElem.textContent =
-        "Sur les 7 derniers jours : " + formatSpeed(sevenKgPerDay);
-
-      speed72hElem.textContent =
-        "Sur les dernières 72 h : " + formatSpeed(threeKgPerDay);
+    if (windowPoints.length >= 2) {
+      // On a assez de points dans la fenêtre : on utilise le premier et le dernier de cette fenêtre
+      a = windowPoints[0];
+      b = windowPoints[windowPoints.length - 1];
+    } else {
+      // Fallback : on utilise les deux dernières mesures globales
+      if (all.length < 2) return null;
+      a = all[all.length - 2];
+      b = all[all.length - 1];
     }
+
+    const da = new Date(a.iso);
+    const db = new Date(b.iso);
+    const dDays = (db - da) / msPerDay;
+
+    if (dDays <= 0) return null; // sécurité : éviter division par 0 ou négatif
+
+    const deltaKg = b.weight - a.weight;
+    return deltaKg / dDays;
+  }
+
+  const sevenKgPerDay = speedUsingWindow(7);
+  const threeKgPerDay = speedUsingWindow(3); // 72 h = 3 jours
+
+  function formatSpeed(kgPerDay) {
+    if (kgPerDay === null) return "Données insuffisantes.";
+
+    const gPerDay = kgPerDay * 1000;
+    const absG = Math.abs(gPerDay);
+    const rounded = Math.round(absG);
+
+    if (rounded < 1) return "≈ 0 g/j (stable)";
+
+    const direction = kgPerDay < 0 ? "perte" : "prise";
+    return "≈ " + rounded.toLocaleString("fr-FR") + " g/j de " + direction;
+  }
+
+  speedGlobalElem.textContent =
+    "Vitesse moyenne globale : " + formatSpeed(globalKgPerDay);
+
+  speed7dElem.textContent =
+    "Sur les 7 derniers jours : " + formatSpeed(sevenKgPerDay);
+
+  speed72hElem.textContent =
+    "Sur les dernières 72 h : " + formatSpeed(threeKgPerDay);
+}
 
     function refreshUI() {
       const all = getAllData();
