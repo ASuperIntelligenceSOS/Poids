@@ -4,7 +4,11 @@
   <meta charset="UTF-8" />
   <title>Weight Timeline – Nicolas</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Chart.js + adaptateur dates pour l'aperçu temps réel sur 12 mois -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -397,7 +401,7 @@
         </div>
       </div>
 
-      <!-- Aperçu d’ensemble, sans vitesses -->
+      <!-- Aperçu d’ensemble sur 12 mois -->
       <div class="overview-container">
         <div class="overview-label">Aperçu d’ensemble</div>
         <div class="overview-inner">
@@ -405,7 +409,7 @@
         </div>
       </div>
 
-      <!-- Courbe principale -->
+      <!-- Courbe principale détaillée -->
       <div class="chart-scroll">
         <div class="chart-scroll-inner">
           <div id="chart-container">
@@ -457,7 +461,7 @@
           <span>Chaque point représente une mesure exacte enregistrée.</span>
         </div>
         <div class="footer-extra">
-          <div>Vue globale en haut, courbe principale défilante si nécessaire.</div>
+          <div>Vue globale en haut sur 12 mois, courbe principale défilante si nécessaire.</div>
           <div>Pour rentrer une valeur, entrer le mot de passe (3 premières lettres + date de naissance).</div>
           <div>Pour supprimer une valeur, cliquez ou touchez la ligne correspondante, confirmez puis entrez le mot de passe.</div>
         </div>
@@ -468,7 +472,7 @@
   <script>
     const storageKey = "np_weight_data_v2";
 
-    // Mesures initiales (celles d'Apple Health)
+    // Mesures initiales (Apple Santé)
     const defaultData = [
       { iso: "2024-03-22T16:36:00", weight: 63.2 },
       { iso: "2024-04-05T16:31:00", weight: 61.7 },
@@ -609,6 +613,7 @@
     function refreshUI() {
       const all = getAllData();
 
+      // TABLEAU
       tbodyElem.innerHTML = "";
       all.forEach(p => {
         const tr = document.createElement("tr");
@@ -630,6 +635,7 @@
         tbodyElem.appendChild(tr);
       });
 
+      // META (dates / dernier poids)
       if (all.length > 0) {
         rangeLabelElem.textContent =
           formatLabelFromIso(all[0].iso).split("–")[0].trim() +
@@ -655,7 +661,7 @@
       const suggestedMin = Math.floor((minW - padding) * 10) / 10;
       const suggestedMax = Math.ceil((maxW + padding) * 10) / 10;
 
-      // Courbe principale
+      // COURBE PRINCIPALE
       if (!weightChart) {
         weightChart = new Chart(chartCtx, {
           type: "line",
@@ -744,16 +750,26 @@
         weightChart.update();
       }
 
-      // Aperçu d’ensemble
+      // APERÇU D’ENSEMBLE SUR 12 MOIS (échelle fixe)
+      const msPerDay = 24 * 60 * 60 * 1000;
+      const lastDate = new Date(all[all.length - 1].iso);
+      const minTime = new Date(lastDate.getTime() - 365 * msPerDay);
+      const maxTime = lastDate;
+
+      // données sous forme {x: date, y: poids}
+      const overviewData = all.map(p => ({
+        x: new Date(p.iso),
+        y: p.weight
+      }));
+
       if (!overviewChart) {
         overviewChart = new Chart(overviewCtx, {
           type: "line",
           data: {
-            labels,
             datasets: [
               {
-                data: weights,
-                tension: 0,
+                data: overviewData,
+                tension: 0.25,
                 borderWidth: 2.2,
                 pointRadius: 0,
                 borderColor: "#22c55e",
@@ -762,25 +778,52 @@
             ]
           },
           options: {
+            parsing: false,
             responsive: true,
             maintainAspectRatio: false,
             interaction: { mode: "none" },
             scales: {
-              x: { display:false },
+              x: {
+                type: "time",
+                min: minTime,
+                max: maxTime,
+                time: {
+                  unit: "month",
+                  displayFormats: { month: "LLL" } // M, J, A...
+                },
+                ticks: {
+                  color: "#64748b",
+                  maxRotation: 0,
+                  autoSkip: true,
+                  major: { enabled: false },
+                  callback(value) {
+                    const d = new Date(value);
+                    // lettre courte du mois (M, A, J...)
+                    return d.toLocaleDateString("fr-FR", { month: "narrow" });
+                  }
+                },
+                grid: {
+                  color: "rgba(51, 65, 85, 0.35)",
+                  borderColor: "rgba(148, 163, 184, 0.5)"
+                }
+              },
               y: {
-                display:false,
-                min:50,
-                max:65
+                min: 45,
+                max: 70,
+                display: false,
+                grid: { display: false }
               }
             },
-            plugins: { legend:{display:false}, tooltip:{enabled:false} }
+            plugins: {
+              legend: { display: false },
+              tooltip: { enabled: false }
+            }
           }
         });
       } else {
-        overviewChart.options.scales.y.min = 50;
-        overviewChart.options.scales.y.max = 65;
-        overviewChart.data.labels = labels;
-        overviewChart.data.datasets[0].data = weights;
+        overviewChart.options.scales.x.min = minTime;
+        overviewChart.options.scales.x.max = maxTime;
+        overviewChart.data.datasets[0].data = overviewData;
         overviewChart.update();
       }
     }
