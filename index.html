@@ -227,6 +227,14 @@
       margin-bottom: 10px;
     }
 
+    .overview-label {
+      text-align: center;
+      font-size: 12px;
+      color: #22c55e;
+      letter-spacing: 0.04em;
+      margin-bottom: 4px;
+    }
+
     .overview-inner {
       width: 100%;
       height: 120px;
@@ -408,6 +416,33 @@
       font-size: 11px;
       color: var(--text-soft);
     }
+
+    /* suppression d’une valeur */
+    tr.data-row {
+      position: relative;
+    }
+
+    .delete-btn {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: none;
+      background: #dc2626;
+      color: #ffffff;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.18s ease, transform 0.18s ease;
+    }
+
+    tr.data-row:hover .delete-btn,
+    tr.data-row.show-delete .delete-btn {
+      opacity: 1;
+      pointer-events: auto;
+    }
   </style>
 </head>
 <body>
@@ -441,8 +476,9 @@
         </div>
       </div>
 
-      <!-- Aperçu global (vue d’ensemble) -->
+      <!-- Aperçu global -->
       <div class="overview-container">
+        <div class="overview-label">Aperçu d’ensemble</div>
         <div class="overview-inner">
           <canvas id="overviewChart"></canvas>
         </div>
@@ -509,6 +545,7 @@
   <script>
     const storageKey = "np_weight_data_v1";
 
+    // Mesures initiales (issues de ton téléphone) : non supprimables
     const initialData = [
       { iso: "2024-03-22T16:36:00", weight: 63.2 },
       { iso: "2024-04-05T16:31:00", weight: 61.7 },
@@ -530,6 +567,29 @@
     let chartCtx, overviewCtx;
     let weightChart, overviewChart;
 
+    function getStoredData() {
+      let stored = [];
+      try {
+        stored = JSON.parse(localStorage.getItem(storageKey) || "[]");
+      } catch (e) {
+        stored = [];
+      }
+      if (!Array.isArray(stored)) stored = [];
+      return stored;
+    }
+
+    function saveStoredData(data) {
+      localStorage.setItem(storageKey, JSON.stringify(data));
+    }
+
+    function getAllData() {
+      const all = initialData.concat(getStoredData());
+      all.sort(function(a, b) {
+        return new Date(a.iso) - new Date(b.iso);
+      });
+      return all;
+    }
+
     function formatLabelFromIso(iso) {
       const d = new Date(iso);
       if (isNaN(d)) return iso;
@@ -545,22 +605,8 @@
       return dateStr + " – " + timeStr;
     }
 
-    function getAllData() {
-      let stored = [];
-      try {
-        stored = JSON.parse(localStorage.getItem(storageKey) || "[]");
-      } catch (e) {
-        stored = [];
-      }
-      const all = initialData.concat(stored);
-      all.sort(function(a, b) {
-        return new Date(a.iso) - new Date(b.iso);
-      });
-      return all;
-    }
-
-    // Plugin: labels lisibles, sans chevauchement massif,
-    // et avec plus de marge pour la dernière valeur.
+    // Plugin : labels au-dessus des points, sans chevauchement
+    // et avec gestion spéciale pour le dernier point.
     const valueLabelPlugin = {
       id: "valueLabelPlugin",
       afterDatasetsDraw: function(chart) {
@@ -570,7 +616,7 @@
         const meta = chart.getDatasetMeta(0);
         const total = dataset.data.length;
 
-        var step = 1;
+        let step = 1;
         if (total > 10) step = 2;
         if (total > 18) step = 3;
 
@@ -578,16 +624,22 @@
           const value = dataset.data[index];
           if (value == null) return;
 
-          // Afficher un point sur "step", + toujours le dernier
-          if (index !== total - 1 && index % step !== 0) return;
+          // Dernier point : toujours affiché
+          if (index === total - 1) {
+            // on force l'affichage plus à gauche, aligné à droite
+          } else {
+            // pour les autres, un point sur "step"
+            if (index % step !== 0) return;
+            // on évite de coller un label juste avant le dernier
+            if (index >= total - 2) return;
+          }
 
           let textX = point.x;
           let textAlign = "center";
 
-          // Dernier point: on aligne à droite et on décale un peu vers la gauche
           if (index === total - 1) {
             textAlign = "right";
-            textX = point.x - 4;
+            textX = point.x - 6; // décale un peu vers l'intérieur
           }
 
           ctx.fillStyle = "#e5e7eb";
@@ -597,9 +649,18 @@
           const text = Number(value).toFixed(1).replace(".", ",");
           ctx.fillText(text, textX, point.y - 6);
         });
+
         ctx.restore();
       }
     };
+
+    function deleteStoredEntry(id) {
+      const filtered = getStoredData().filter(function(p) {
+        return p.id !== id;
+      });
+      saveStoredData(filtered);
+      refreshUI();
+    }
 
     function refreshUI() {
       const all = getAllData();
@@ -608,6 +669,7 @@
       tbodyElem.innerHTML = "";
       all.forEach(function(p) {
         const tr = document.createElement("tr");
+        tr.className = "data-row";
         const tdDate = document.createElement("td");
         const tdWeight = document.createElement("td");
         tdDate.textContent = formatLabelFromIso(p.iso);
@@ -615,10 +677,30 @@
         tdWeight.className = "weight-cell";
         tr.appendChild(tdDate);
         tr.appendChild(tdWeight);
+
+        const isStored = !!p.id;
+        if (isStored) {
+          const delBtn = document.createElement("button");
+          delBtn.type = "button";
+          delBtn.className = "delete-btn";
+          delBtn.textContent = "🗑";
+          delBtn.title = "Supprimer cette mesure";
+          delBtn.addEventListener("click", function(e) {
+            e.stopPropagation();
+            deleteStoredEntry(p.id);
+          });
+          tr.appendChild(delBtn);
+
+          // Sur mobile : un touch sur la ligne fait apparaître la corbeille
+          tr.addEventListener("touchstart", function() {
+            tr.classList.toggle("show-delete");
+          }, { passive: true });
+        }
+
         tbodyElem.appendChild(tr);
       });
 
-      // Méta en-tête
+      // Métadonnées
       if (all.length > 0) {
         rangeLabelElem.textContent =
           formatLabelFromIso(all[0].iso).split("–")[0].trim() +
@@ -637,11 +719,11 @@
       const labels = all.map(function(p) { return formatLabelFromIso(p.iso); });
       const weights = all.map(function(p) { return p.weight; });
 
-      var minW = Math.min.apply(null, weights);
-      var maxW = Math.max.apply(null, weights);
-      var padding = 1.0;
-      var suggestedMin = Math.floor((minW - padding) * 10) / 10;
-      var suggestedMax = Math.ceil((maxW + padding) * 10) / 10;
+      const minW = Math.min.apply(null, weights);
+      const maxW = Math.max.apply(null, weights);
+      const padding = 1.0;
+      const suggestedMin = Math.floor((minW - padding) * 10) / 10;
+      const suggestedMax = Math.ceil((maxW + padding) * 10) / 10;
 
       // Courbe principale
       if (!weightChart) {
@@ -662,10 +744,10 @@
                 pointBorderWidth: 0,
                 fill: true,
                 backgroundColor: function(ctx) {
-                  var chart = ctx.chart;
-                  var area = chart.chartArea;
+                  const chart = ctx.chart;
+                  const area = chart.chartArea;
                   if (!area) return "rgba(56, 189, 248, 0.25)";
-                  var gradient = chart.ctx.createLinearGradient(
+                  const gradient = chart.ctx.createLinearGradient(
                     0,
                     area.top,
                     0,
@@ -684,7 +766,7 @@
             interaction: { mode: "index", intersect: false },
             layout: {
               padding: {
-                right: 26   // laisse plus de place au dernier label
+                right: 40   // plus de marge pour le dernier label
               }
             },
             scales: {
@@ -765,12 +847,8 @@
             maintainAspectRatio: false,
             interaction: { mode: "none" },
             scales: {
-              x: {
-                display: false
-              },
-              y: {
-                display: false
-              }
+              x: { display: false },
+              y: { display: false }
             },
             plugins: {
               legend: { display: false },
@@ -815,14 +893,13 @@
 
         const iso = date + "T" + time + ":00";
 
-        let stored = [];
-        try {
-          stored = JSON.parse(localStorage.getItem(storageKey) || "[]");
-        } catch (err) {
-          stored = [];
-        }
-        stored.push({ iso: iso, weight: weight });
-        localStorage.setItem(storageKey, JSON.stringify(stored));
+        const stored = getStoredData();
+        stored.push({
+          iso: iso,
+          weight: weight,
+          id: Date.now().toString(36) + Math.random().toString(16).slice(2)
+        });
+        saveStoredData(stored);
 
         weightInput.value = "";
         refreshUI();
