@@ -659,7 +659,7 @@
 
     function checkPassword(actionLabel) {
       const input = window.prompt("Mot de passe requis pour " + actionLabel + " :");
-      if (input === null) return false; // Annuler = on arrête tout
+      if (input === null) return false; // Annulation
       const norm = input.trim().toLowerCase();
       if (norm === "pac23121983" || norm === "pac231283") {
         return true;
@@ -668,7 +668,7 @@
       return false;
     }
 
-    // Plugin labels au-dessus des points (avec gestion spéciale du dernier)
+    // Plugin Chart.js pour afficher les valeurs au-dessus des points
     const valueLabelPlugin = {
       id: "valueLabelPlugin",
       afterDatasetsDraw(chart) {
@@ -721,7 +721,7 @@
       refreshUI();
     }
 
-    // Calcule les vitesses globales, sur 7 jours et sur 72 h
+    // Vitesse globale, sur 7 jours et sur 72 h, calculs strictement basés sur les données présentes
     function computeSpeeds(all) {
       if (!speedGlobalElem || !speed7dElem || !speed72hElem) return;
 
@@ -738,41 +738,31 @@
       const last = all[all.length - 1];
       const lastDate = new Date(last.iso);
 
-      // 1) Vitesse moyenne globale (depuis la première mesure)
+      // 1) Vitesse moyenne globale (première -> dernière)
       const totalDays = (lastDate - new Date(first.iso)) / msPerDay;
       let globalKgPerDay = null;
       if (totalDays > 0) {
-        const deltaKg = last.weight - first.weight; // négatif si perte
+        const deltaKg = last.weight - first.weight; // <0 = perte ; >0 = prise
         globalKgPerDay = deltaKg / totalDays;
       }
 
-      // 2) Fonction générique : vitesse sur N jours
+      // 2) Vitesse sur une fenêtre de N jours (strictement à l'intérieur de la fenêtre)
       function windowSpeed(days) {
-        if (all.length < 2) return null;
-
         const cutoff = new Date(lastDate.getTime() - days * msPerDay);
         const windowPoints = all.filter(p => new Date(p.iso) >= cutoff);
 
-        let startPoint, endPoint;
+        // Il faut au moins deux mesures dans la fenêtre, sinon mathématiquement impossible
+        if (windowPoints.length < 2) return null;
 
-        if (windowPoints.length >= 2) {
-          // Assez de points dans la fenêtre : on reste dans cette fenêtre
-          startPoint = windowPoints[0];
-          endPoint = windowPoints[windowPoints.length - 1];
-        } else {
-          // Pas assez de points dans la fenêtre,
-          // on prend les deux dernières mesures globales
-          endPoint = last;
-          startPoint = all[all.length - 2];
-        }
+        const wFirst = windowPoints[0];
+        const wLast = windowPoints[windowPoints.length - 1];
+        const wDays =
+          (new Date(wLast.iso) - new Date(wFirst.iso)) / msPerDay;
 
-        const daysInterval =
-          (new Date(endPoint.iso) - new Date(startPoint.iso)) / msPerDay;
+        if (wDays <= 0) return null;
 
-        if (daysInterval <= 0) return null;
-
-        const delta = endPoint.weight - startPoint.weight; // négatif si perte
-        return delta / daysInterval;
+        const delta = wLast.weight - wFirst.weight; // <0 = perte ; >0 = prise
+        return delta / wDays;
       }
 
       const sevenKgPerDay = windowSpeed(7);
